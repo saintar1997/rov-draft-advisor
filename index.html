@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROV Draft Advisor</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ROV HERO DRAFT ADVISOR</h1>
+            <p id="draft-status">เลือกทีมของคุณ</p>
+        </header>
+
+        <!-- เลือกทีม -->
+        <div id="team-selection" class="section">
+            <button id="team1-btn" class="team-btn team1">Team 1</button>
+            <button id="team2-btn" class="team-btn team2">Team 2</button>
+        </div>
+
+        <!-- อินเตอร์เฟซการดราฟ -->
+        <div id="draft-interface" class="section hidden">
+            <div class="columns">
+                <!-- คอลัมน์ซ้าย: สถานะทีม -->
+                <div class="left-column">
+                    <!-- แผงทีมที่เลือก -->
+                    <div id="selected-team-panel" class="panel">
+                        <h2><span class="star">⭐</span> <span id="team-name">Team 1</span></h2>
+                        <p>Win Rate Prediction: <span id="win-rate-prediction">0.0%</span></p>
+                        
+                        <div id="team-positions" class="team-positions">
+                            <!-- ตำแหน่งจะถูกเพิ่มด้วย JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- สถานะการแบน -->
+                    <div class="panel">
+                        <h2>Ban Status</h2>
+                        <div class="ban-status">
+                            <div>
+                                <h3 class="team1-text">Team 1</h3>
+                                <div id="team1-bans" class="ban-list">
+                                    <!-- รายการแบนจะถูกเพิ่มด้วย JavaScript -->
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="team2-text">Team 2</h3>
+                                <div id="team2-bans" class="ban-list">
+                                    <!-- รายการแบนจะถูกเพิ่มด้วย JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- คอลัมน์ขวา: การดราฟ -->
+                <div class="right-column">
+                    <div class="panel">
+                        <!-- ขั้นตอนการแบน -->
+                        <div id="ban-phase" class="phase hidden">
+                            <h2><span id="banning-team" class="team1-text">Team 1</span> - Select Heroes to Ban</h2>
+                            <p class="subtitle">Select up to 3 heroes to ban from your opponent</p>
+                            <div id="ban-heroes" class="hero-grid">
+                                <!-- ฮีโร่สำหรับแบนจะถูกเพิ่มด้วย JavaScript -->
+                            </div>
+                        </div>
+
+                        <!-- ขั้นตอนการเลือก -->
+                        <div id="pick-phase" class="phase hidden">
+                            <div class="phase-header">
+                                <h2><span id="picking-team" class="team1-text">Team 1</span> - Select Heroes</h2>
+                                <button id="toggle-recommendations" class="btn">Show Recommendations</button>
+                            </div>
+
+                            <!-- การเลือกตำแหน่ง -->
+                            <div id="position-selection" class="position-grid">
+                                <!-- ตำแหน่งจะถูกเพิ่มด้วย JavaScript -->
+                            </div>
+
+                            <!-- คำแนะนำ -->
+                            <div id="recommendations" class="panel sub-panel hidden">
+                                <h3>Recommended for <span id="recommended-position">Position</span></h3>
+                                <div id="recommended-heroes" class="recommendation-grid">
+                                    <!-- ฮีโร่ที่แนะนำจะถูกเพิ่มด้วย JavaScript -->
+                                </div>
+                            </div>
+
+                            <!-- การเลือกฮีโร่ -->
+                            <div id="hero-selection" class="hero-grid">
+                                <!-- ฮีโร่จะถูกเพิ่มด้วย JavaScript -->
+                            </div>
+                        </div>
+
+                        <!-- ดราฟเสร็จสิ้น -->
+                        <div id="complete-phase" class="phase hidden">
+                            <h2>Draft Complete</h2>
+                            <div class="team-summaries">
+                                <!-- สรุปทีม 1 -->
+                                <div class="team-summary team1-bg">
+                                    <h3>Team 1</h3>
+                                    <div class="win-rate">
+                                        <span id="team1-win-rate">0.0%</span>
+                                        <span class="label">Win Rate</span>
+                                    </div>
+                                    <div id="team1-summary" class="hero-summary">
+                                        <!-- ฮีโร่ที่เลือกจะถูกเพิ่มด้วย JavaScript -->
+                                    </div>
+                                    <div>
+                                        <h4>Banned:</h4>
+                                        <div id="team1-summary-bans" class="banned-heroes">
+                                            <!-- ฮีโร่ที่แบนจะถูกเพิ่มด้วย JavaScript -->
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- สรุปทีม 2 -->
+                                <div class="team-summary team2-bg">
+                                    <h3>Team 2</h3>
+                                    <div class="win-rate">
+                                        <span id="team2-win-rate">0.0%</span>
+                                        <span class="label">Win Rate</span>
+                                    </div>
+                                    <div id="team2-summary" class="hero-summary">
+                                        <!-- ฮีโร่ที่เลือกจะถูกเพิ่มด้วย JavaScript -->
+                                    </div>
+                                    <div>
+                                        <h4>Banned:</h4>
+                                        <div id="team2-summary-bans" class="banned-heroes">
+                                            <!-- ฮีโร่ที่แบนจะถูกเพิ่มด้วย JavaScript -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="prediction">
+                                <h3>Prediction:</h3>
+                                <p><span id="predicted-winner" class="team1-text">Team 1</span> is likely to win!</p>
+                            </div>
+                            
+                            <button id="restart-btn" class="btn restart">Restart Draft</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
