@@ -1,0 +1,28 @@
+# URL ของหน้าเว็บที่ต้องการดึงข้อมูล
+url = "https://liquipedia.net/honorofkings/Portal:Heroes/Arena_of_Valor"
+
+# ดึงข้อมูลจาก URL
+response = requests.get(url)
+soup = BeautifulSoup(response.content, 'html.parser')
+
+# ดึงข้อมูลจาก <div class="gallerytext"> และจัดกลุ่มฮีโร่ตามประเภท
+hero_classes = ["Assassin", "Fighter", "Mage", "Carry", "Support", "Tank"]
+hero_data = {hero_class: [] for hero_class in hero_classes}
+
+# ดึงข้อมูลจาก 6 <ul class="gallery mw-gallery-packed"> แรก
+uls = soup.find_all("ul", class_="gallery mw-gallery-packed", limit=6)
+
+# วนลูปเพื่อดึงชื่อฮีโร่และจัดกลุ่ม
+for i, ul in enumerate(uls):
+    hero_class = hero_classes[i]
+    heroes = [div.text.strip() for div in ul.find_all("div", class_="gallerytext")]
+    hero_data[hero_class] = heroes
+
+# แปลงข้อมูลเป็น DataFrame
+df = pd.DataFrame(dict([(k, pd.Series(v)) for k, v in hero_data.items()]))
+
+# บันทึกเป็น Excel
+df.to_excel("RoV_Heroes_By_Class.xlsx", index=False)
+
+print("บันทึกข้อมูลเป็น RoV_Heroes_By_Class.xlsx เรียบร้อยแล้ว!")
+
