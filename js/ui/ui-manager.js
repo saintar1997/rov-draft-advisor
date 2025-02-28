@@ -209,96 +209,200 @@ const UIManager = (() => {
   }
   
   /**
-   * Render heroes table
-   */
-  function renderHeroesTable() {
+ * Fixed renderHeroesTable function to prevent the sorting error
+ * Add this to your ui-manager.js file or replace the existing function
+ */
+function renderHeroesTable() {
+  try {
+    console.log("Starting to render heroes table...");
+    
+    // Get the heroes tbody element
+    const tbody = document.getElementById('heroes-tbody');
+    if (!tbody) {
+      console.warn("heroes-tbody element not found");
+      return;
+    }
+    
+    // Clear the table
+    tbody.innerHTML = '';
+    
+    // Get hero data from localStorage
+    let heroes = {};
     try {
-      const tbody = document.getElementById('heroes-tbody');
-      if (!tbody) return;
-      
-      // Clear table
-      tbody.innerHTML = '';
-      
-      // Get heroes
-      const heroes = HeroManager.allHeroes;
-      
-      // Sort heroes alphabetically
-      heroes.sort((a, b) => a.name.localeCompare(b.name));
-      
-      // Add heroes to table
-      heroes.forEach(hero => {
-        const row = document.createElement('tr');
-        
-        // Image cell
-        const imageCell = document.createElement('td');
-        const img = document.createElement('img');
-        img.src = hero.image;
-        img.alt = hero.name;
-        imageCell.appendChild(img);
-        
-        // Name cell
-        const nameCell = document.createElement('td');
-        nameCell.textContent = hero.name;
-        
-        // Classes cell
-        const classesCell = document.createElement('td');
-        const heroClasses = document.createElement('div');
-        heroClasses.className = 'hero-classes';
-        
-        hero.classes.forEach((cls, index) => {
-          // Create class badge
-          const badge = document.createElement('span');
-          badge.className = `class-badge class-badge-${cls.toLowerCase()}`;
-          badge.textContent = cls;
-          heroClasses.appendChild(badge);
-          
-          // Add separator if not last class
-          if (index < hero.classes.length - 1) {
-            const separator = document.createElement('span');
-            separator.textContent = ' | ';
-            separator.className = 'class-separator';
-            heroClasses.appendChild(separator);
+      const heroData = localStorage.getItem('rovHeroData');
+      if (heroData) {
+        heroes = JSON.parse(heroData);
+      } else {
+        console.warn('No hero data found in localStorage');
+      }
+    } catch (error) {
+      console.error('Error parsing hero data:', error);
+    }
+    
+    // Get hero images
+    let heroImages = {};
+    try {
+      const imagesData = localStorage.getItem('rovHeroImages');
+      if (imagesData) {
+        heroImages = JSON.parse(imagesData);
+      }
+    } catch (error) {
+      console.error('Error parsing hero images:', error);
+    }
+    
+    console.log("Heroes data loaded:", heroes);
+    
+    // Create an array of all heroes (avoiding duplicates)
+    const allHeroes = [];
+    const processedHeroes = new Set(); // Track processed heroes
+    
+    // Process each hero class
+    for (const [heroClass, heroList] of Object.entries(heroes)) {
+      // Ensure heroList is an array before iterating
+      if (Array.isArray(heroList)) {
+        heroList.forEach(heroName => {
+          if (!processedHeroes.has(heroName)) {
+            processedHeroes.add(heroName);
+            
+            // Find all classes this hero belongs to
+            const heroClasses = [];
+            for (const [cls, list] of Object.entries(heroes)) {
+              if (Array.isArray(list) && list.includes(heroName)) {
+                heroClasses.push(cls);
+              }
+            }
+            
+            allHeroes.push({
+              name: heroName,
+              classes: heroClasses,
+              classText: heroClasses.join(' | '),
+              primaryClass: heroClasses.length > 0 ? heroClasses[0] : 'Unknown',
+              image: heroImages[heroName] || `https://via.placeholder.com/60?text=${encodeURIComponent(heroName)}`
+            });
           }
         });
-        
-        classesCell.appendChild(heroClasses);
-        
-        // Actions cell
-        const actionsCell = document.createElement('td');
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'delete-btn';
-        deleteBtn.textContent = 'ลบ';
-        deleteBtn.addEventListener('click', () => deleteHero(hero.name));
-        actionsCell.appendChild(deleteBtn);
-        
-        // Add cells to row
-        row.appendChild(imageCell);
-        row.appendChild(nameCell);
-        row.appendChild(classesCell);
-        row.appendChild(actionsCell);
-        
-        // Add row to table
-        tbody.appendChild(row);
-      });
+      }
+    }
+    
+    console.log("Processed heroes:", allHeroes.length);
+    
+    // Sort heroes by name (with proper error handling)
+    if (allHeroes.length > 0) {
+      allHeroes.sort((a, b) => a.name.localeCompare(b.name));
+    }
+    
+    // Function to get class color
+    function getClassColor(heroClass) {
+      const classColors = {
+        'Assassin': '#ff5252',
+        'Fighter': '#ff9800',
+        'Mage': '#2196f3',
+        'Carry': '#9c27b0',
+        'Support': '#4caf50',
+        'Tank': '#607d8b'
+      };
       
-      // If no heroes
-      if (heroes.length === 0) {
-        const emptyRow = document.createElement('tr');
-        const emptyCell = document.createElement('td');
-        emptyCell.colSpan = 4;
-        emptyCell.textContent = 'ไม่พบข้อมูลฮีโร่ กรุณาเพิ่มหรือนำเข้าข้อมูลฮีโร่';
-        emptyCell.style.textAlign = 'center';
-        emptyCell.style.padding = '20px';
-        emptyRow.appendChild(emptyCell);
-        tbody.appendChild(emptyRow);
+      return classColors[heroClass] || '#eeeeee';
+    }
+    
+    // Render heroes table
+    allHeroes.forEach(hero => {
+      const row = document.createElement('tr');
+      
+      // Apply styling based on class
+      if (hero.classes.length > 1) {
+        const gradientColors = hero.classes.map(cls => getClassColor(cls)).join(', ');
+        row.style.background = `linear-gradient(90deg, ${gradientColors})`;
+        row.style.opacity = '0.85';
+      } else if (hero.classes.length === 1) {
+        row.style.backgroundColor = `${getClassColor(hero.primaryClass)}33`;
       }
       
-      // Update filters
-      updateHeroFilters();
-    } catch (error) {
-      console.error('Error rendering heroes table:', error);
+      // Image cell
+      const imageCell = document.createElement('td');
+      const img = document.createElement('img');
+      img.src = hero.image;
+      img.alt = hero.name;
+      img.style.borderRadius = '8px';
+      img.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+      imageCell.appendChild(img);
+      
+      // Name cell
+      const nameCell = document.createElement('td');
+      nameCell.textContent = hero.name;
+      nameCell.style.fontWeight = 'bold';
+      
+      // Class cell
+      const classCell = document.createElement('td');
+      hero.classes.forEach((cls, index) => {
+        const classSpan = document.createElement('span');
+        classSpan.textContent = cls;
+        classSpan.style.display = 'inline-block';
+        classSpan.style.padding = '2px 8px';
+        classSpan.style.margin = '2px';
+        classSpan.style.borderRadius = '4px';
+        classSpan.style.backgroundColor = getClassColor(cls);
+        classSpan.style.color = 'white';
+        classSpan.style.fontSize = '0.9em';
+        
+        classCell.appendChild(classSpan);
+        
+        // Add separator if not the last class
+        if (index < hero.classes.length - 1) {
+          const separator = document.createElement('span');
+          separator.textContent = '|';
+          separator.style.margin = '0 5px';
+          separator.style.color = '#aaa';
+          classCell.appendChild(separator);
+        }
+      });
+      
+      // Actions cell
+      const actionCell = document.createElement('td');
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'delete-btn';
+      deleteBtn.textContent = 'Delete';
+      deleteBtn.addEventListener('click', () => {
+        deleteHero(hero.name);
+      });
+      
+      deleteBtn.style.backgroundColor = '#f44336';
+      deleteBtn.style.color = 'white';
+      deleteBtn.style.border = 'none';
+      deleteBtn.style.padding = '5px 10px';
+      deleteBtn.style.borderRadius = '4px';
+      deleteBtn.style.cursor = 'pointer';
+      deleteBtn.style.transition = 'background-color 0.3s';
+      
+      actionCell.appendChild(deleteBtn);
+      
+      // Add cells to row
+      row.appendChild(imageCell);
+      row.appendChild(nameCell);
+      row.appendChild(classCell);
+      row.appendChild(actionCell);
+      
+      // Add row to table
+      tbody.appendChild(row);
+    });
+    
+    // Show empty state if no heroes
+    if (allHeroes.length === 0) {
+      const emptyRow = document.createElement('tr');
+      const emptyCell = document.createElement('td');
+      emptyCell.colSpan = 4;
+      emptyCell.textContent = 'No hero data found. Please add or import heroes.';
+      emptyCell.style.textAlign = 'center';
+      emptyCell.style.padding = '20px';
+      emptyRow.appendChild(emptyCell);
+      tbody.appendChild(emptyRow);
     }
+    
+    console.log("Heroes table rendering complete");
+  } catch (error) {
+    console.error('Error rendering heroes table:', error);
   }
+}
   
   /**
    * Update hero filters with available classes
@@ -335,33 +439,63 @@ const UIManager = (() => {
   }
   
   /**
-   * Delete a hero
-   * @param {string} heroName - Name of the hero to delete
-   */
-  async function deleteHero(heroName) {
+ * Delete a hero
+ * @param {string} heroName - Name of the hero to delete
+ */
+function deleteHero(heroName) {
+  if (confirm(`Are you sure you want to delete hero ${heroName}?`)) {
     try {
-      if (confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบฮีโร่ ${heroName}?`)) {
-        showLoading();
-        
-        // Delete hero using HeroManager
-        const success = await HeroManager.deleteHero(heroName);
-        
-        if (success) {
-          // Refresh table
-          renderHeroesTable();
-          alert(`ลบฮีโร่ ${heroName} เรียบร้อยแล้ว`);
-        } else {
-          alert('เกิดข้อผิดพลาดในการลบฮีโร่');
+      // Get hero data
+      let heroes = {};
+      try {
+        const heroData = localStorage.getItem('rovHeroData');
+        if (heroData) {
+          heroes = JSON.parse(heroData);
         }
-        
-        hideLoading();
+      } catch (error) {
+        console.error('Error parsing hero data:', error);
+        return;
       }
+      
+      // Remove hero from all classes
+      for (const heroClass in heroes) {
+        if (Array.isArray(heroes[heroClass])) {
+          heroes[heroClass] = heroes[heroClass].filter(name => name !== heroName);
+          
+          // Remove empty classes
+          if (heroes[heroClass].length === 0) {
+            delete heroes[heroClass];
+          }
+        }
+      }
+      
+      // Save updated heroes
+      localStorage.setItem('rovHeroData', JSON.stringify(heroes));
+      
+      // Remove hero image
+      try {
+        const imagesData = localStorage.getItem('rovHeroImages');
+        if (imagesData) {
+          const heroImages = JSON.parse(imagesData);
+          if (heroImages[heroName]) {
+            delete heroImages[heroName];
+            localStorage.setItem('rovHeroImages', JSON.stringify(heroImages));
+          }
+        }
+      } catch (error) {
+        console.error('Error updating hero images:', error);
+      }
+      
+      // Refresh table
+      renderHeroesTable();
+      
+      alert(`Hero ${heroName} deleted successfully`);
     } catch (error) {
       console.error('Error deleting hero:', error);
-      hideLoading();
-      alert('เกิดข้อผิดพลาดในการลบฮีโร่');
+      alert('Error deleting hero');
     }
   }
+}
   
   /**
    * Set up event handlers for heroes management
