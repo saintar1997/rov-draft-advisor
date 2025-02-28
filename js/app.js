@@ -8,7 +8,7 @@ import DataManager from './data/data-manager.js';
 import AnalyticsManager from './analytics/analytics-manager.js';
 import UIManager from './ui/ui-manager.js';
 import HeroManager from './heroes/hero-manager.js';
-import HeroSelectionController from './heroes/hero-selection-controller.js';
+import HeroSelectionController from './heroes/hero-selection.js';
 
 /**
  * Initialize the application when DOM is ready
