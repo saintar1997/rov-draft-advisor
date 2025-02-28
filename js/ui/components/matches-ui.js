@@ -1,23 +1,25 @@
 /**
- * matches-ui.js - Handles UI interactions for matches page
- * Provides functionality for rendering, filtering, and managing match data display
+ * matches-ui.js - Handles the matches UI component interactions
+ * This module manages all UI interactions for the matches page, including
+ * rendering, filtering, and CRUD operations for match data
  */
 
 const MatchesUI = (() => {
-  // DOM elements cache
+  // Cache for DOM elements to improve performance
   let elements = {};
   
-  // Current pagination state
-  let paginationState = {
-    currentPage: 1,
-    itemsPerPage: 10,
-    totalPages: 1
-  };
+  // Current page information for pagination
+  let currentPage = 1;
+  let matchesPerPage = 10;
+  let filteredMatches = [];
   
-  // Initialize UI
+  /**
+   * Initialize the Matches UI component
+   * @returns {Promise} Promise that resolves when initialization is complete
+   */
   function init() {
     try {
-      console.log("Initializing Matches UI...");
+      console.log('Initializing Matches UI...');
       
       // Cache DOM elements
       cacheElements();
@@ -25,30 +27,37 @@ const MatchesUI = (() => {
       // Set up event listeners
       setupEventListeners();
       
-      // Initialize table
-      renderMatchesTable();
+      // Initialize with default data if needed
+      initializeMatchData();
       
-      // Initialize styles
+      // Add styles for match table
       addMatchTableStyles();
+      
+      // Render the matches table if on the matches page
+      if (document.getElementById('history-page')?.classList.contains('active')) {
+        renderMatchesTable();
+      }
       
       return Promise.resolve();
     } catch (error) {
-      console.error("Error initializing Matches UI:", error);
+      console.error('Error initializing Matches UI:', error);
       return Promise.reject(error);
     }
   }
   
-  // Cache DOM elements for better performance
+  /**
+   * Cache DOM elements for better performance
+   */
   function cacheElements() {
     elements = {
-      // Import controls
+      // Match controls
       importUrl: document.getElementById('import-url'),
       fetchBtn: document.getElementById('fetch-btn'),
       importFile: document.getElementById('import-file'),
       importFileBtn: document.getElementById('import-file-btn'),
       addMatchBtn: document.getElementById('add-match-btn'),
       
-      // Filter controls
+      // Search and filter
       matchSearch: document.getElementById('match-search'),
       tournamentFilter: document.getElementById('tournament-filter'),
       teamFilter: document.getElementById('team-filter'),
@@ -61,67 +70,253 @@ const MatchesUI = (() => {
       nextPageBtn: document.getElementById('next-page'),
       pageInfo: document.getElementById('page-info'),
       
-      // Delete all
-      deleteAllMatchesBtn: document.getElementById('delete-all-matches-btn')
+      // Actions
+      deleteAllMatchesBtn: document.getElementById('delete-all-matches-btn'),
+      
+      // Pages
+      historyPage: document.getElementById('history-page')
     };
   }
   
-  // Set up event listeners with error handling
+  /**
+   * Set up event listeners for match page elements
+   */
   function setupEventListeners() {
-    try {
-      // Import URL
-      if (elements.fetchBtn) {
-        elements.fetchBtn.addEventListener('click', fetchMatchDataFromUrl);
-      }
-      
-      // Import file
-      if (elements.importFile) {
-        elements.importFile.addEventListener('change', importMatchesFromFile);
-      }
-      
-      // Add new match
-      if (elements.addMatchBtn) {
-        elements.addMatchBtn.addEventListener('click', addNewMatch);
-      }
-      
-      // Search and filter
-      if (elements.matchSearch) {
-        elements.matchSearch.addEventListener('input', filterMatches);
-      }
-      
-      if (elements.tournamentFilter) {
-        elements.tournamentFilter.addEventListener('change', filterMatches);
-      }
-      
-      if (elements.teamFilter) {
-        elements.teamFilter.addEventListener('change', filterMatches);
-      }
-      
-      // Pagination
-      if (elements.prevPageBtn) {
-        elements.prevPageBtn.addEventListener('click', () => navigateMatchesPage('prev'));
-      }
-      
-      if (elements.nextPageBtn) {
-        elements.nextPageBtn.addEventListener('click', () => navigateMatchesPage('next'));
-      }
-      
-      // Delete all matches
-      if (elements.deleteAllMatchesBtn) {
-        elements.deleteAllMatchesBtn.addEventListener('click', deleteAllMatches);
-      }
-    } catch (error) {
-      console.error("Error setting up event listeners:", error);
+    // Import buttons
+    if (elements.fetchBtn) {
+      elements.fetchBtn.addEventListener('click', fetchMatchDataFromUrl);
+    }
+    
+    if (elements.importFile) {
+      elements.importFile.addEventListener('change', importMatchesFromFile);
+    }
+    
+    if (elements.addMatchBtn) {
+      elements.addMatchBtn.addEventListener('click', addNewMatch);
+    }
+    
+    // Search and filter
+    if (elements.matchSearch) {
+      elements.matchSearch.addEventListener('input', filterMatches);
+    }
+    
+    if (elements.tournamentFilter) {
+      elements.tournamentFilter.addEventListener('change', filterMatches);
+    }
+    
+    if (elements.teamFilter) {
+      elements.teamFilter.addEventListener('change', filterMatches);
+    }
+    
+    // Pagination
+    if (elements.prevPageBtn) {
+      elements.prevPageBtn.addEventListener('click', () => navigateMatchesPage('prev'));
+    }
+    
+    if (elements.nextPageBtn) {
+      elements.nextPageBtn.addEventListener('click', () => navigateMatchesPage('next'));
+    }
+    
+    // Delete all matches
+    if (elements.deleteAllMatchesBtn) {
+      elements.deleteAllMatchesBtn.addEventListener('click', deleteAllMatches);
+    }
+    
+    // Listen for history button click to render matches
+    const historyBtn = document.getElementById('history-btn');
+    if (historyBtn) {
+      historyBtn.addEventListener('click', function() {
+        // Render after a short delay to ensure page transition is complete
+        setTimeout(() => {
+          renderMatchesTable();
+        }, 100);
+      });
     }
   }
   
-  // Render the matches table with current filters and pagination
+  /**
+   * Initialize match data with defaults if none exists
+   */
+  function initializeMatchData() {
+    // Check if match data exists in localStorage
+    if (!localStorage.getItem('rovMatchData')) {
+      // Sample match data from data.js
+      const sampleMatches = [
+        {
+          date: "2025-01-15",
+          tournament: "RoV Pro League 2025 Summer Group Stage",
+          team1: "Team Flash",
+          team2: "Buriram United Esports",
+          picks1: ["Florentino", "Valhein", "Tulen", "Alice", "Thane"],
+          picks2: ["Riktor", "Violet", "Zata", "Zip", "Ormarr"],
+          bans1: ["Keera", "Capheny"],
+          bans2: ["Airi", "Laville"],
+          winner: "Team Flash",
+          isImported: true,
+        },
+        {
+          date: "2025-01-20",
+          tournament: "RoV Pro League 2025 Summer Group Stage",
+          team1: "Bacon Time",
+          team2: "King of Gamers Club",
+          picks1: ["Airi", "Capheny", "Liliana", "Enzo", "Lumburr"],
+          picks2: ["Florentino", "Elsu", "Dirak", "Krizzix", "Grakk"],
+          bans1: ["Keera", "Yena"],
+          bans2: ["Riktor", "Laville"],
+          winner: "King of Gamers Club",
+          isImported: true,
+        },
+        {
+          date: "2025-01-25",
+          tournament: "RoV Pro League 2025 Summer Group Stage",
+          team1: "EVOS Esports",
+          team2: "Team Flash",
+          picks1: ["Yena", "Laville", "Zata", "Rouie", "Baldum"],
+          picks2: ["Airi", "Tel'Annas", "Tulen", "Alice", "Thane"],
+          bans1: ["Florentino", "Capheny"],
+          bans2: ["Keera", "Violet"],
+          winner: "Team Flash",
+          isImported: true,
+        }
+      ];
+      
+      // Save to localStorage
+      localStorage.setItem('rovMatchData', JSON.stringify(sampleMatches));
+    }
+  }
+  
+  /**
+   * Add CSS styles for the match table
+   */
+  function addMatchTableStyles() {
+    // This should ideally be in a CSS file, but included here for completeness
+    const styleAlreadyExists = document.getElementById('matches-table-styles');
+    if (styleAlreadyExists) return;
+    
+    const style = document.createElement('style');
+    style.id = 'matches-table-styles';
+    style.textContent = `
+      /* Match table styles */
+      .matches-table {
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      }
+      
+      .matches-table th {
+        background-color: #2e3192;
+        color: #1baeea;
+        padding: 12px 15px;
+        text-align: left;
+        font-weight: bold;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+      
+      .matches-table td {
+        padding: 10px 15px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+      }
+      
+      .matches-table tr:last-child td {
+        border-bottom: none;
+      }
+      
+      /* Style for winning team */
+      .matches-table .winner-team {
+        font-weight: bold;
+        color: #4caf50;
+      }
+      
+      .matches-table .team1-won {
+        background-color: rgba(76, 175, 80, 0.05);
+      }
+      
+      .matches-table .team2-won {
+        background-color: rgba(76, 175, 80, 0.05);
+      }
+      
+      /* Button styles */
+      .matches-table button {
+        margin-right: 5px;
+        padding: 5px 12px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+      
+      .matches-table .view-btn {
+        background-color: #2196f3;
+        color: white;
+      }
+      
+      .matches-table .view-btn:hover {
+        background-color: #1976d2;
+      }
+      
+      .matches-table .edit-btn {
+        background-color: #ff9800;
+        color: white;
+      }
+      
+      .matches-table .edit-btn:hover {
+        background-color: #f57c00;
+      }
+      
+      .matches-table .delete-btn {
+        background-color: #f44336;
+        color: white;
+      }
+      
+      .matches-table .delete-btn:hover {
+        background-color: #d32f2f;
+      }
+      
+      /* Match detail modal */
+      .match-detail-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+      
+      .match-detail-modal .modal-content {
+        background-color: #1f2a40;
+        border-radius: 8px;
+        width: 80%;
+        max-width: 700px;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      }
+    `;
+    
+    document.head.appendChild(style);
+  }
+  
+  /**
+   * Render the matches table with current data
+   */
   function renderMatchesTable() {
     console.log("Rendering matches table...");
     
     try {
       // Get matches from localStorage
-      const matches = getMatchesData();
+      const matches = JSON.parse(localStorage.getItem('rovMatchData')) || [];
+      
+      // Update filtered matches
+      updateFilteredMatches();
       
       // Get the tbody element
       const tbody = elements.matchesTbody;
@@ -133,212 +328,158 @@ const MatchesUI = (() => {
       // Clear the tbody
       tbody.innerHTML = '';
       
-      // Apply filters if any
-      const filteredMatches = filterMatchesData(matches);
+      // Calculate pagination
+      const startIndex = (currentPage - 1) * matchesPerPage;
+      const endIndex = Math.min(startIndex + matchesPerPage, filteredMatches.length);
+      const currentMatches = filteredMatches.slice(startIndex, endIndex);
       
-      // Update pagination info
-      updatePaginationState(filteredMatches);
+      // Populate the table with matches
+      currentMatches.forEach((match) => {
+        const originalIndex = matches.indexOf(match);
+        const row = document.createElement('tr');
+        
+        // Add class based on winner
+        if (match.winner === match.team1) {
+          row.classList.add('team1-won');
+        } else if (match.winner === match.team2) {
+          row.classList.add('team2-won');
+        }
+        
+        // Create management buttons
+        let managementButtons = '';
+        if (match.isImported) {
+          // If imported, no edit button
+          managementButtons = `
+            <button class="view-btn" data-index="${originalIndex}">View</button>
+            <button class="delete-btn" data-index="${originalIndex}">Delete</button>
+          `;
+        } else {
+          // If not imported, include edit button
+          managementButtons = `
+            <button class="view-btn" data-index="${originalIndex}">View</button>
+            <button class="edit-btn" data-index="${originalIndex}">Edit</button>
+            <button class="delete-btn" data-index="${originalIndex}">Delete</button>
+          `;
+        }
+        
+        // Create row HTML
+        row.innerHTML = `
+          <td>${match.date || 'N/A'}</td>
+          <td>${match.tournament || 'N/A'}</td>
+          <td class="${match.winner === match.team1 ? 'winner-team' : ''}">${match.team1 || 'N/A'}</td>
+          <td class="${match.winner === match.team2 ? 'winner-team' : ''}">${match.team2 || 'N/A'}</td>
+          <td>${match.winner || 'N/A'}</td>
+          <td>${managementButtons}</td>
+        `;
+        
+        tbody.appendChild(row);
+      });
       
-      // Get current page matches
-      const currentPageMatches = getCurrentPageMatches(filteredMatches);
+      // If no matches, show message
+      if (currentMatches.length === 0) {
+        const emptyRow = document.createElement('tr');
+        const emptyCell = document.createElement('td');
+        emptyCell.colSpan = 6;
+        
+        if (filteredMatches.length === 0) {
+          emptyCell.textContent = 'No match data found. Please add or import match data.';
+        } else {
+          emptyCell.textContent = 'No matches match your search criteria.';
+        }
+        
+        emptyCell.style.textAlign = 'center';
+        emptyCell.style.padding = '20px';
+        emptyRow.appendChild(emptyCell);
+        tbody.appendChild(emptyRow);
+      }
       
-      // Render matches
-      renderMatchRows(currentPageMatches, matches, tbody);
-      
-      // Update filters dropdown options
-      updateFilterOptions(matches);
+      // Add event listeners to buttons
+      addButtonEventListeners(tbody);
       
       // Update pagination display
       updatePaginationDisplay();
+      
+      // Update filters with available tournaments and teams
+      updateMatchFilters(matches);
+      
     } catch (error) {
       console.error('Error rendering matches table:', error);
-      showErrorMessage("เกิดข้อผิดพลาดในการแสดงตารางแมตช์");
     }
   }
   
-  // Helper function to get matches data from localStorage
-  function getMatchesData() {
-    try {
-      return JSON.parse(localStorage.getItem('rovMatchData')) || [];
-    } catch (error) {
-      console.error("Error parsing match data:", error);
-      return [];
-    }
-  }
-  
-  // Filter matches based on search and dropdown filters
-  function filterMatchesData(matches) {
-    const searchText = elements.matchSearch?.value.toLowerCase() || '';
-    const tournamentFilter = elements.tournamentFilter?.value || '';
-    const teamFilter = elements.teamFilter?.value || '';
-    
-    return matches.filter(match => {
-      // Text search across multiple fields
-      const matchText = `${match.date || ''} ${match.tournament || ''} ${match.team1 || ''} ${match.team2 || ''} ${match.winner || ''}`.toLowerCase();
-      const matchesSearch = !searchText || matchText.includes(searchText);
-      
-      // Tournament filter
-      const matchesTournament = !tournamentFilter || match.tournament === tournamentFilter;
-      
-      // Team filter
-      const matchesTeam = !teamFilter || match.team1 === teamFilter || match.team2 === teamFilter;
-      
-      return matchesSearch && matchesTournament && matchesTeam;
-    });
-  }
-  
-  // Update pagination state based on filtered matches
-  function updatePaginationState(filteredMatches) {
-    paginationState.totalPages = Math.max(1, Math.ceil(filteredMatches.length / paginationState.itemsPerPage));
-    paginationState.currentPage = Math.min(paginationState.currentPage, paginationState.totalPages);
-  }
-  
-  // Get matches for current page
-  function getCurrentPageMatches(filteredMatches) {
-    const startIndex = (paginationState.currentPage - 1) * paginationState.itemsPerPage;
-    const endIndex = startIndex + paginationState.itemsPerPage;
-    return filteredMatches.slice(startIndex, endIndex);
-  }
-  
-  // Render match rows in the table
-  function renderMatchRows(matchesToRender, allMatches, tbody) {
-    if (matchesToRender.length === 0) {
-      // If no matches found, show empty state
-      const emptyRow = document.createElement('tr');
-      const emptyCell = document.createElement('td');
-      emptyCell.colSpan = 6;
-      emptyCell.textContent = 'ไม่พบข้อมูลแมตช์ที่ตรงกับการค้นหา';
-      emptyCell.style.textAlign = 'center';
-      emptyCell.style.padding = '20px';
-      emptyRow.appendChild(emptyCell);
-      tbody.appendChild(emptyRow);
-      return;
-    }
-    
-    // Render each match
-    matchesToRender.forEach(match => {
-      const row = document.createElement('tr');
-      
-      // Add class based on winner
-      if (match.winner === match.team1) {
-        row.classList.add('team1-won');
-      } else if (match.winner === match.team2) {
-        row.classList.add('team2-won');
-      }
-      
-      // Find original index in all matches array for button data attributes
-      const originalIndex = allMatches.indexOf(match);
-      
-      // Create management buttons
-      let managementButtons = '';
-      if (match.isImported) {
-        // If imported, no edit button
-        managementButtons = `
-          <button class="view-btn" data-index="${originalIndex}">ดู</button>
-          <button class="delete-btn" data-index="${originalIndex}">ลบ</button>
-        `;
-      } else {
-        // If not imported, include edit button
-        managementButtons = `
-          <button class="view-btn" data-index="${originalIndex}">ดู</button>
-          <button class="edit-btn" data-index="${originalIndex}">แก้ไข</button>
-          <button class="delete-btn" data-index="${originalIndex}">ลบ</button>
-        `;
-      }
-      
-      // Create row HTML
-      row.innerHTML = `
-        <td>${match.date || 'N/A'}</td>
-        <td>${match.tournament || 'N/A'}</td>
-        <td class="${match.winner === match.team1 ? 'winner-team' : ''}">${match.team1 || 'N/A'}</td>
-        <td class="${match.winner === match.team2 ? 'winner-team' : ''}">${match.team2 || 'N/A'}</td>
-        <td>${match.winner || 'N/A'}</td>
-        <td>${managementButtons}</td>
-      `;
-      
-      tbody.appendChild(row);
-    });
-    
-    // Add event listeners to the buttons
-    addButtonEventListeners(tbody);
-  }
-  
-  // Add event listeners to buttons in the table
+  /**
+   * Add event listeners to the buttons in the matches table
+   * @param {HTMLElement} tbody - The table body element containing the rows
+   */
   function addButtonEventListeners(tbody) {
+    // View buttons
     tbody.querySelectorAll('.view-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const index = parseInt(btn.getAttribute('data-index'));
+      btn.addEventListener('click', function() {
+        const index = parseInt(this.getAttribute('data-index'));
         viewMatch(index);
       });
     });
     
+    // Edit buttons
     tbody.querySelectorAll('.edit-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const index = parseInt(btn.getAttribute('data-index'));
+      btn.addEventListener('click', function() {
+        const index = parseInt(this.getAttribute('data-index'));
         editMatch(index);
       });
     });
     
+    // Delete buttons
     tbody.querySelectorAll('.delete-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const index = parseInt(btn.getAttribute('data-index'));
+      btn.addEventListener('click', function() {
+        const index = parseInt(this.getAttribute('data-index'));
         deleteMatch(index);
       });
     });
   }
   
-  // Update filter dropdown options
-  function updateFilterOptions(matches) {
+  /**
+   * Update the filtered matches array based on current filters
+   */
+  function updateFilteredMatches() {
     try {
-      // Get unique tournaments for dropdown
-      const tournaments = [...new Set(matches.map(match => match.tournament).filter(Boolean))];
-      tournaments.sort();
+      const matches = JSON.parse(localStorage.getItem('rovMatchData')) || [];
+      const searchText = elements.matchSearch?.value.toLowerCase() || '';
+      const tournamentFilter = elements.tournamentFilter?.value || '';
+      const teamFilter = elements.teamFilter?.value || '';
       
-      // Clear and repopulate tournament dropdown
-      const tournamentFilter = elements.tournamentFilter;
-      if (tournamentFilter) {
-        tournamentFilter.innerHTML = '<option value="">ทุกทัวร์นาเมนต์</option>';
-        tournaments.forEach(tournament => {
-          const option = document.createElement('option');
-          option.value = tournament;
-          option.textContent = tournament;
-          tournamentFilter.appendChild(option);
-        });
-      }
+      // Filter matches based on search and filter criteria
+      filteredMatches = matches.filter(match => {
+        // Filter by search text
+        const matchText = `${match.date || ''} ${match.tournament || ''} ${match.team1 || ''} ${match.team2 || ''} ${match.winner || ''}`.toLowerCase();
+        const matchesSearch = !searchText || matchText.includes(searchText);
+        
+        // Filter by tournament
+        const matchesTournament = !tournamentFilter || match.tournament === tournamentFilter;
+        
+        // Filter by team
+        const matchesTeam = !teamFilter || match.team1 === teamFilter || match.team2 === teamFilter;
+        
+        return matchesSearch && matchesTournament && matchesTeam;
+      });
       
-      // Get unique teams for dropdown
-      const teams = [...new Set([
-        ...matches.map(match => match.team1).filter(Boolean),
-        ...matches.map(match => match.team2).filter(Boolean)
-      ])];
-      teams.sort();
-      
-      // Clear and repopulate team dropdown
-      const teamFilter = elements.teamFilter;
-      if (teamFilter) {
-        teamFilter.innerHTML = '<option value="">ทุกทีม</option>';
-        teams.forEach(team => {
-          const option = document.createElement('option');
-          option.value = team;
-          option.textContent = team;
-          teamFilter.appendChild(option);
-        });
-      }
+      // Reset to first page when filters change
+      currentPage = 1;
     } catch (error) {
-      console.error("Error updating filter options:", error);
+      console.error('Error updating filtered matches:', error);
+      filteredMatches = [];
     }
   }
   
-  // Update pagination display
+  /**
+   * Update the pagination display
+   */
   function updatePaginationDisplay() {
-    const { currentPage, totalPages } = paginationState;
+    if (!elements.pageInfo) return;
     
-    // Update page info text
-    if (elements.pageInfo) {
-      elements.pageInfo.textContent = `หน้า ${currentPage} จาก ${totalPages}`;
-    }
+    const totalPages = Math.max(1, Math.ceil(filteredMatches.length / matchesPerPage));
+    elements.pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
     
-    // Enable/disable prev/next buttons
+    // Enable/disable pagination buttons
     if (elements.prevPageBtn) {
       elements.prevPageBtn.disabled = currentPage <= 1;
     }
@@ -348,28 +489,116 @@ const MatchesUI = (() => {
     }
   }
   
-  // Navigate pages
-  function navigateMatchesPage(direction) {
-    const { currentPage, totalPages } = paginationState;
-    
-    if (direction === 'prev' && currentPage > 1) {
-      paginationState.currentPage -= 1;
-      renderMatchesTable();
-    } else if (direction === 'next' && currentPage < totalPages) {
-      paginationState.currentPage += 1;
-      renderMatchesTable();
+  /**
+   * Update the match filters with available options
+   * @param {Array} matches - Array of match objects
+   */
+  function updateMatchFilters(matches) {
+    try {
+      if (!elements.tournamentFilter || !elements.teamFilter) {
+        console.warn('Filter elements not found');
+        return;
+      }
+      
+      // Save current selections
+      const currentTournament = elements.tournamentFilter.value;
+      const currentTeam = elements.teamFilter.value;
+      
+      // Clear current options
+      elements.tournamentFilter.innerHTML = '<option value="">All tournaments</option>';
+      elements.teamFilter.innerHTML = '<option value="">All teams</option>';
+      
+      // Get unique tournaments
+      const tournaments = [];
+      matches.forEach(match => {
+        if (match.tournament && !tournaments.includes(match.tournament)) {
+          tournaments.push(match.tournament);
+        }
+      });
+      
+      // Sort tournaments alphabetically
+      tournaments.sort();
+      
+      // Add tournament options
+      tournaments.forEach(tournament => {
+        const option = document.createElement('option');
+        option.value = tournament;
+        option.textContent = tournament;
+        option.selected = tournament === currentTournament;
+        elements.tournamentFilter.appendChild(option);
+      });
+      
+      // Get unique teams
+      const teams = [];
+      matches.forEach(match => {
+        if (match.team1 && !teams.includes(match.team1)) {
+          teams.push(match.team1);
+        }
+        if (match.team2 && !teams.includes(match.team2)) {
+          teams.push(match.team2);
+        }
+      });
+      
+      // Sort teams alphabetically
+      teams.sort();
+      
+      // Add team options
+      teams.forEach(team => {
+        const option = document.createElement('option');
+        option.value = team;
+        option.textContent = team;
+        option.selected = team === currentTeam;
+        elements.teamFilter.appendChild(option);
+      });
+      
+    } catch (error) {
+      console.error('Error updating match filters:', error);
     }
   }
   
-  // View match details - shows a modal with match details
+  /**
+   * Filter matches based on search and filter criteria
+   */
+  function filterMatches() {
+    try {
+      // Update filtered matches
+      updateFilteredMatches();
+      
+      // Re-render the table with the filtered matches
+      renderMatchesTable();
+    } catch (error) {
+      console.error('Error filtering matches:', error);
+    }
+  }
+  
+  /**
+   * Navigate between pages in the matches table
+   * @param {string} direction - Direction to navigate ('prev' or 'next')
+   */
+  function navigateMatchesPage(direction) {
+    const totalPages = Math.max(1, Math.ceil(filteredMatches.length / matchesPerPage));
+    
+    if (direction === 'prev' && currentPage > 1) {
+      currentPage--;
+    } else if (direction === 'next' && currentPage < totalPages) {
+      currentPage++;
+    }
+    
+    renderMatchesTable();
+  }
+  
+  /**
+   * View details of a specific match
+   * @param {number} index - Index of the match in the matches array
+   */
   function viewMatch(index) {
     try {
       // Get matches data
-      const matches = getMatchesData();
+      const matches = JSON.parse(localStorage.getItem('rovMatchData')) || [];
       
       // Check if index is valid
       if (index < 0 || index >= matches.length) {
-        showErrorMessage('ไม่พบข้อมูลแมตช์');
+        alert('Match not found');
         return;
       }
       
@@ -380,18 +609,18 @@ const MatchesUI = (() => {
         <div class="match-detail-modal">
           <div class="modal-content">
             <div class="modal-header">
-              <h3>รายละเอียดแมตช์</h3>
+              <h3>Match Details</h3>
               <span class="close-modal">&times;</span>
             </div>
             <div class="modal-body">
               <div class="match-info">
-                <p><strong>วันที่:</strong> ${match.date || 'ไม่ระบุ'}</p>
-                <p><strong>ทัวร์นาเมนต์:</strong> ${match.tournament || 'ไม่ระบุ'}</p>
+                <p><strong>Date:</strong> ${match.date || 'Not specified'}</p>
+                <p><strong>Tournament:</strong> ${match.tournament || 'Not specified'}</p>
               </div>
               
               <div class="teams-container">
                 <div class="team-detail ${match.winner === match.team1 ? 'winner' : ''}">
-                  <h4>${match.team1} ${match.winner === match.team1 ? '(ผู้ชนะ)' : ''}</h4>
+                  <h4>${match.team1} ${match.winner === match.team1 ? '(Winner)' : ''}</h4>
                   <div class="team-heroes">
                     <div class="picks">
                       <h5>Picks:</h5>
@@ -409,7 +638,7 @@ const MatchesUI = (() => {
                 </div>
                 
                 <div class="team-detail ${match.winner === match.team2 ? 'winner' : ''}">
-                  <h4>${match.team2} ${match.winner === match.team2 ? '(ผู้ชนะ)' : ''}</h4>
+                  <h4>${match.team2} ${match.winner === match.team2 ? '(Winner)' : ''}</h4>
                   <div class="team-heroes">
                     <div class="picks">
                       <h5>Picks:</h5>
@@ -428,7 +657,7 @@ const MatchesUI = (() => {
               </div>
             </div>
             <div class="modal-footer">
-              <button class="close-btn">ปิด</button>
+              <button class="close-btn">Close</button>
             </div>
           </div>
         </div>
@@ -453,28 +682,34 @@ const MatchesUI = (() => {
           document.body.removeChild(modalContainer);
         }
       });
+      
     } catch (error) {
       console.error('Error viewing match:', error);
-      showErrorMessage('เกิดข้อผิดพลาดในการดูข้อมูลแมตช์');
+      alert('Error viewing match details');
     }
   }
   
-  // Edit match (placeholder)
+  /**
+   * Edit a specific match (placeholder for future implementation)
+   * @param {number} index - Index of the match in the matches array
+   */
   function editMatch(index) {
-    console.log(`Editing match at index ${index}`);
-    showMessage('ฟังก์ชันแก้ไขแมตช์จะเพิ่มในเวอร์ชันถัดไป');
+    alert('Edit match functionality will be added in a future version');
   }
   
-  // Delete match
+  /**
+   * Delete a specific match
+   * @param {number} index - Index of the match in the matches array
+   */
   function deleteMatch(index) {
     try {
-      if (confirm('คุณแน่ใจหรือไม่ว่าต้องการลบแมตช์นี้?')) {
+      if (confirm('Are you sure you want to delete this match?')) {
         // Get matches data
-        const matches = getMatchesData();
+        const matches = JSON.parse(localStorage.getItem('rovMatchData')) || [];
         
         // Check if index is valid
         if (index < 0 || index >= matches.length) {
-          showErrorMessage('ไม่พบข้อมูลแมตช์');
+          alert('Match not found');
           return;
         }
         
@@ -485,7 +720,7 @@ const MatchesUI = (() => {
         localStorage.setItem('rovMatchData', JSON.stringify(matches));
         
         // Refresh the table
-        renderMatchesTable();
+        filterMatches();
         
         // Update data if DataManager is available
         if (typeof DataManager !== 'undefined' && typeof DataManager.init === 'function') {
@@ -496,28 +731,30 @@ const MatchesUI = (() => {
           });
         }
         
-        showMessage('ลบแมตช์เรียบร้อยแล้ว');
+        alert('Match deleted successfully');
       }
     } catch (error) {
       console.error('Error deleting match:', error);
-      showErrorMessage('เกิดข้อผิดพลาดในการลบแมตช์');
+      alert('Error deleting match');
     }
   }
   
-  // Delete all matches
+  /**
+   * Delete all matches
+   */
   function deleteAllMatches() {
-    if (confirm('คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลแมตช์ทั้งหมด? การกระทำนี้ไม่สามารถเรียกคืนได้')) {
+    if (confirm('Are you sure you want to delete all matches? This action cannot be undone.')) {
       try {
-        // ลบข้อมูลแมตช์จาก localStorage
+        // Delete matches from localStorage
         localStorage.removeItem('rovMatchData');
         
-        // ตั้งค่าข้อมูลแมตช์เป็นอาร์เรย์ว่าง
+        // Set matches to empty array
         localStorage.setItem('rovMatchData', JSON.stringify([]));
         
-        // รีเฟรชหน้าแมตช์
-        renderMatchesTable();
+        // Refresh the matches page
+        filterMatches();
         
-        // อัปเดตข้อมูล
+        // Update data
         if (typeof DataManager !== 'undefined' && typeof DataManager.init === 'function') {
           DataManager.init().then(() => {
             if (typeof UIManager !== 'undefined' && typeof UIManager.render === 'function') {
@@ -526,52 +763,75 @@ const MatchesUI = (() => {
           });
         }
         
-        showMessage('ลบข้อมูลแมตช์ทั้งหมดเรียบร้อย');
+        alert('All matches deleted successfully');
       } catch (error) {
         console.error('Error deleting all matches:', error);
-        showErrorMessage('เกิดข้อผิดพลาดในการลบข้อมูลแมตช์');
+        alert('Error deleting all matches');
       }
     }
   }
   
-  // Filter matches based on search and filter criteria
-  function filterMatches() {
-    // Just re-render the table with current filters
-    paginationState.currentPage = 1; // Reset to first page when filtering
-    renderMatchesTable();
-  }
-  
-  // Fetch match data from URL
+  /**
+   * Fetch match data from URL (placeholder implementation)
+   */
   function fetchMatchDataFromUrl() {
-    const url = elements.importUrl?.value.trim();
+    const url = elements.importUrl.value.trim();
     
     if (!url) {
-      showErrorMessage('กรุณาใส่ URL');
+      alert('Please enter a URL');
       return;
     }
     
     // Show loading overlay
     showLoading();
     
-    // Simulate fetching data (in a real app, use fetch API)
+    // Simulate API request (actual implementation would use fetch API)
     setTimeout(() => {
       try {
-        // Check if URL is from a supported source
+        // In a real implementation, we would send request to our server
+        // to proxy the request to avoid CORS issues
+        
+        // Simulate fetching data
+        const newMatches = [];
+        
+        // Check if URL looks like a Liquipedia URL with Game_history
         if (url.includes('liquipedia.net') && url.includes('Game_history')) {
-          // Simulate successfully fetched data
-          const newMatches = generateSampleMatches(3);
+          // Simulate successful data fetch
           
-          // Add to existing matches
-          let matches = getMatchesData();
+          // Simulate 3 new matches
+          for (let i = 0; i < 3; i++) {
+            newMatches.push({
+              date: `2025-03-${10 + i}`,
+              tournament: "RoV Pro League 2025 Summer Playoffs",
+              team1: "Team Flash",
+              team2: "Buriram United Esports",
+              picks1: ["Keera", "Valhein", "Tulen", "Alice", "Thane"],
+              picks2: ["Riktor", "Violet", "Zata", "Zip", "Ormarr"],
+              bans1: ["Airi", "Florentino"],
+              bans2: ["Laville", "Capheny"],
+              winner: i % 2 === 0 ? "Team Flash" : "Buriram United Esports",
+              isImported: true
+            });
+          }
+          
+          // Add new matches to localStorage
+          let matches = [];
+          try {
+            matches = JSON.parse(localStorage.getItem('rovMatchData')) || [];
+          } catch (error) {
+            matches = [];
+          }
+          
+          // Combine new matches with existing ones
           matches = [...matches, ...newMatches];
           
           // Save to localStorage
           localStorage.setItem('rovMatchData', JSON.stringify(matches));
           
-          // Refresh table
-          renderMatchesTable();
+          // Refresh the matches table
+          filterMatches();
           
-          // Update data if DataManager is available
+          // Update data
           if (typeof DataManager !== 'undefined' && typeof DataManager.init === 'function') {
             DataManager.init().then(() => {
               if (typeof UIManager !== 'undefined' && typeof UIManager.render === 'function') {
@@ -580,52 +840,23 @@ const MatchesUI = (() => {
             });
           }
           
-          showMessage(`ดึงข้อมูลสำเร็จ เพิ่มแมตช์ใหม่ ${newMatches.length} แมตช์`);
+          alert(`Successfully fetched data. Added ${newMatches.length} new matches.`);
         } else {
-          showErrorMessage('URL ไม่ถูกต้อง กรุณาใช้ URL ของ Liquipedia Game History');
+          alert('Invalid URL. Please use a Liquipedia Game History URL.');
         }
       } catch (error) {
-        console.error('Error fetching data from URL:', error);
-        showErrorMessage('เกิดข้อผิดพลาดในการดึงข้อมูล');
+        console.error('Error fetching match data from URL:', error);
+        alert('Error fetching match data');
       } finally {
         hideLoading();
       }
-    }, 1000);
+    }, 1500); // Simulate 1.5 second delay
   }
   
-  // Helper function to generate sample matches (for demo)
-  function generateSampleMatches(count) {
-    const matches = [];
-    const teams = ['Team Flash', 'Buriram United Esports', 'EVOS Esports', 'King of Gamers Club', 'Bacon Time'];
-    const tournaments = ['RoV Pro League 2025 Summer Group Stage', 'RoV Pro League 2025 Summer Playoffs', 'RoV World Cup 2025'];
-    
-    for (let i = 0; i < count; i++) {
-      const team1 = teams[Math.floor(Math.random() * teams.length)];
-      let team2 = teams[Math.floor(Math.random() * teams.length)];
-      
-      // Ensure team2 is different from team1
-      while (team2 === team1) {
-        team2 = teams[Math.floor(Math.random() * teams.length)];
-      }
-      
-      matches.push({
-        date: `2025-03-${10 + i}`,
-        tournament: tournaments[Math.floor(Math.random() * tournaments.length)],
-        team1,
-        team2,
-        picks1: ['Keera', 'Valhein', 'Tulen', 'Alice', 'Thane'],
-        picks2: ['Riktor', 'Violet', 'Zata', 'Zip', 'Ormarr'],
-        bans1: ['Airi', 'Florentino'],
-        bans2: ['Laville', 'Capheny'],
-        winner: Math.random() > 0.5 ? team1 : team2,
-        isImported: true
-      });
-    }
-    
-    return matches;
-  }
-  
-  // Import matches from file
+  /**
+   * Import matches from a file
+   * @param {Event} event - The file input change event
+   */
   function importMatchesFromFile(event) {
     const file = event.target.files[0];
     
@@ -647,39 +878,52 @@ const MatchesUI = (() => {
           // JSON file
           newMatches = JSON.parse(e.target.result);
         } else if (file.name.endsWith('.csv')) {
-          // CSV file - in a real app, use a CSV parser
-          showErrorMessage('ยังไม่รองรับไฟล์ CSV ในตัวอย่างนี้');
+          // CSV file - not implemented in this example
+          alert('CSV import not supported in this example');
           hideLoading();
           return;
         } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-          // Excel file - in a real app, use a library like SheetJS
-          showErrorMessage('ยังไม่รองรับไฟล์ Excel ในตัวอย่างนี้');
+          // Excel file - not implemented in this example
+          alert('Excel import not supported in this example');
           hideLoading();
           return;
         } else {
-          showErrorMessage('ไฟล์ไม่รองรับ กรุณาใช้ไฟล์ JSON, CSV หรือ Excel');
+          alert('Unsupported file type. Please use JSON, CSV, or Excel file');
           hideLoading();
           return;
         }
         
-        // Validate data
+        // Validate data format
         if (!Array.isArray(newMatches)) {
-          showErrorMessage('รูปแบบข้อมูลไม่ถูกต้อง ควรเป็นอาร์เรย์ของแมตช์');
+          alert('Invalid data format. Data should be an array of matches');
           hideLoading();
           return;
         }
         
-        // Add to existing matches
-        let matches = getMatchesData();
+        // Add new matches to localStorage
+        let matches = [];
+        try {
+          matches = JSON.parse(localStorage.getItem('rovMatchData')) || [];
+        } catch (error) {
+          matches = [];
+        }
+        
+        // Mark all imported matches
+        newMatches = newMatches.map(match => ({
+          ...match,
+          isImported: true
+        }));
+        
+        // Combine new matches with existing ones
         matches = [...matches, ...newMatches];
         
         // Save to localStorage
         localStorage.setItem('rovMatchData', JSON.stringify(matches));
         
-        // Refresh table
-        renderMatchesTable();
+        // Refresh the matches table
+        filterMatches();
         
-        // Update data if DataManager is available
+        // Update data
         if (typeof DataManager !== 'undefined' && typeof DataManager.init === 'function') {
           DataManager.init().then(() => {
             if (typeof UIManager !== 'undefined' && typeof UIManager.render === 'function') {
@@ -688,13 +932,10 @@ const MatchesUI = (() => {
           });
         }
         
-        // Reset file input
-        event.target.value = '';
-        
-        showMessage(`นำเข้าแมตช์สำเร็จ เพิ่มแมตช์ใหม่ ${newMatches.length} แมตช์`);
+        alert(`Successfully imported ${newMatches.length} matches`);
       } catch (error) {
         console.error('Error importing matches from file:', error);
-        showErrorMessage('เกิดข้อผิดพลาดในการนำเข้าแมตช์');
+        alert('Error importing matches');
       } finally {
         hideLoading();
       }
@@ -702,256 +943,23 @@ const MatchesUI = (() => {
     
     reader.onerror = function() {
       hideLoading();
-      showErrorMessage('เกิดข้อผิดพลาดในการอ่านไฟล์');
+      alert('Error reading file');
     };
     
-    // Read file as text
+    // Read the file as text
     reader.readAsText(file);
   }
   
-  // Add new match
+  /**
+   * Add a new match (placeholder for future implementation)
+   */
   function addNewMatch() {
-    console.log('Add new match clicked');
-    showMessage('ฟังก์ชันเพิ่มแมตช์ใหม่จะเพิ่มในเวอร์ชันถัดไป');
-    
-    // Here you would typically open a modal or form for adding a new match
-    // For now we just show a message
+    alert('Add new match functionality will be added in a future version');
   }
   
-  // Add CSS styles for match table and UI
-  function addMatchTableStyles() {
-    const style = document.createElement('style');
-    style.textContent = `
-      /* Matches table styles */
-      .matches-table-container {
-        overflow-x: auto;
-        margin-bottom: 15px;
-        background-color: rgba(0, 0, 0, 0.2);
-        border-radius: 8px;
-      }
-      
-      .matches-table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      
-      .matches-table th, 
-      .matches-table td {
-        padding: 12px;
-        text-align: left;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      }
-      
-      .matches-table th {
-        background-color: rgba(0, 0, 0, 0.3);
-        color: #1baeea;
-        position: sticky;
-        top: 0;
-      }
-      
-      .matches-table tr:hover {
-        background-color: rgba(0, 0, 0, 0.2);
-      }
-      
-      /* Winner team highlighting */
-      .matches-table .winner-team {
-        color: #4caf50;
-        font-weight: bold;
-      }
-      
-      /* Button styles in table */
-      .matches-table td button {
-        margin-right: 5px;
-        padding: 5px 10px;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        font-family: "Kanit", sans-serif;
-        font-size: 0.9rem;
-        transition: all 0.2s;
-      }
-      
-      .matches-table td .view-btn {
-        background-color: #2e3192;
-        color: white;
-      }
-      
-      .matches-table td .view-btn:hover {
-        background-color: #1baeea;
-      }
-      
-      .matches-table td .edit-btn {
-        background-color: #ff9800;
-        color: white;
-      }
-      
-      .matches-table td .edit-btn:hover {
-        background-color: #f57c00;
-      }
-      
-      .matches-table td .delete-btn {
-        background-color: #f44336;
-        color: white;
-      }
-      
-      .matches-table td .delete-btn:hover {
-        background-color: #d32f2f;
-      }
-      
-      /* Match detail modal styles */
-      .match-detail-modal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.7);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-      }
-      
-      .match-detail-modal .modal-content {
-        background-color: #1f2a40;
-        border-radius: 8px;
-        width: 80%;
-        max-width: 700px;
-        max-height: 80vh;
-        overflow-y: auto;
-        animation: modalFadeIn 0.3s;
-      }
-      
-      @keyframes modalFadeIn {
-        from { opacity: 0; transform: translateY(-20px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-      
-      .match-detail-modal .modal-header {
-        padding: 15px 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      }
-      
-      .match-detail-modal .modal-header h3 {
-        margin: 0;
-        color: #1baeea;
-      }
-      
-      .match-detail-modal .close-modal {
-        font-size: 24px;
-        cursor: pointer;
-        color: #aaa;
-        transition: color 0.2s;
-      }
-      
-      .match-detail-modal .close-modal:hover {
-        color: white;
-      }
-      
-      .match-detail-modal .modal-body {
-        padding: 20px;
-      }
-      
-      .match-detail-modal .match-info {
-        margin-bottom: 20px;
-      }
-      
-      .match-detail-modal .teams-container {
-        display: flex;
-        gap: 20px;
-        flex-wrap: wrap;
-      }
-      
-      .match-detail-modal .team-detail {
-        flex: 1;
-        min-width: 250px;
-        background-color: rgba(0, 0, 0, 0.2);
-        padding: 15px;
-        border-radius: 8px;
-      }
-      
-      .match-detail-modal .team-detail.winner {
-        border: 1px solid #4caf50;
-        box-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
-      }
-      
-      .match-detail-modal .team-detail h4 {
-        color: white;
-        margin-top: 0;
-        padding-bottom: 8px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      }
-      
-      .match-detail-modal .team-detail.winner h4 {
-        color: #4caf50;
-      }
-      
-      .match-detail-modal .team-heroes {
-        display: flex;
-        gap: 15px;
-      }
-      
-      .match-detail-modal .picks,
-      .match-detail-modal .bans {
-        flex: 1;
-      }
-      
-      .match-detail-modal h5 {
-        color: #1baeea;
-        margin-bottom: 10px;
-      }
-      
-      .match-detail-modal ul {
-        list-style-type: none;
-        padding: 0;
-        margin: 0;
-      }
-      
-      .match-detail-modal ul li {
-        padding: 5px 0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      }
-      
-      .match-detail-modal .modal-footer {
-        padding: 15px 20px;
-        display: flex;
-        justify-content: flex-end;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-      }
-      
-      .match-detail-modal .close-btn {
-        padding: 8px 16px;
-        background-color: #2e3192;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.2s;
-      }
-      
-      .match-detail-modal .close-btn:hover {
-        background-color: #1baeea;
-      }
-      
-      /* Responsive adjustments */
-      @media (max-width: 768px) {
-        .match-detail-modal .teams-container {
-          flex-direction: column;
-        }
-        
-        .match-detail-modal .modal-content {
-          width: 95%;
-        }
-      }
-    `;
-    
-    document.head.appendChild(style);
-  }
-  
-  // Show loading overlay
+  /**
+   * Show loading overlay
+   */
   function showLoading() {
     const loadingOverlay = document.querySelector('.loading-overlay');
     if (loadingOverlay) {
@@ -959,22 +967,14 @@ const MatchesUI = (() => {
     }
   }
   
-  // Hide loading overlay
+  /**
+   * Hide loading overlay
+   */
   function hideLoading() {
     const loadingOverlay = document.querySelector('.loading-overlay');
     if (loadingOverlay) {
       loadingOverlay.style.display = 'none';
     }
-  }
-  
-  // Show success message
-  function showMessage(message) {
-    alert(message);
-  }
-  
-  // Show error message
-  function showErrorMessage(message) {
-    alert(message);
   }
   
   // Public API
@@ -983,37 +983,18 @@ const MatchesUI = (() => {
     renderMatchesTable,
     filterMatches,
     viewMatch,
-    editMatch,
     deleteMatch,
     deleteAllMatches,
-    fetchMatchDataFromUrl,
     importMatchesFromFile,
-    addNewMatch,
-    showLoading,
-    hideLoading
+    fetchMatchDataFromUrl,
+    addNewMatch
   };
 })();
 
-// Initialize MatchesUI when DOM is loaded
+// Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-  // Initialize MatchesUI if we're on the matches page
-  if (document.getElementById('history-page')) {
-    MatchesUI.init();
-    
-    // If matches page is active, render matches table
-    if (document.getElementById('history-page').classList.contains('active')) {
-      MatchesUI.renderMatchesTable();
-    }
-    
-    // If we have a history button, add event listener to render matches when clicked
-    const historyBtn = document.getElementById('history-btn');
-    if (historyBtn && !historyBtn._matchesUiInitialized) {
-      historyBtn.addEventListener('click', function() {
-        setTimeout(() => {
-          MatchesUI.renderMatchesTable();
-        }, 100);
-      });
-      historyBtn._matchesUiInitialized = true; // Mark as initialized to prevent duplicate event listeners
-    }
-  }
+  // Initialize MatchesUI
+  MatchesUI.init().catch(error => {
+    console.error('Failed to initialize MatchesUI:', error);
+  });
 });
