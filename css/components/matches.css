@@ -1,0 +1,307 @@
+/**
+ * matches.css - Styles for match management
+ */
+
+/* Match import and controls */
+.history-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.matches-section {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: var(--border-radius);
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+/* Matches table */
+.matches-table-container {
+  overflow-x: auto;
+  margin-bottom: 15px;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: var(--border-radius);
+}
+
+.matches-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.matches-table th {
+  background-color: var(--primary-color);
+  color: var(--secondary-color);
+  padding: 12px 15px;
+  text-align: left;
+  font-weight: bold;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.matches-table td {
+  padding: 10px 15px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.matches-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Team that won styling */
+.matches-table .winner-team {
+  font-weight: bold;
+  color: var(--success-color);
+}
+
+.matches-table .team1-won {
+  background-color: rgba(76, 175, 80, 0.05);
+}
+
+.matches-table .team2-won {
+  background-color: rgba(76, 175, 80, 0.05);
+}
+
+/* Table buttons */
+.matches-table button {
+  margin-right: 5px;
+  padding: 5px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.matches-table .view-btn {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.matches-table .view-btn:hover {
+  background-color: var(--secondary-color);
+}
+
+.matches-table .edit-btn {
+  background-color: var(--warning-color);
+  color: white;
+}
+
+.matches-table .edit-btn:hover {
+  background-color: #f57c00;
+}
+
+.matches-table .delete-btn {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+.matches-table .delete-btn:hover {
+  background-color: #d32f2f;
+}
+
+/* Match controls and pagination */
+.matches-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 15px;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+}
+
+.page-btn {
+  padding: 8px 16px;
+  background-color: rgba(0, 0, 0, 0.3);
+  color: var(--text-color);
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: var(--font-family);
+}
+
+.page-btn:hover {
+  background-color: var(--primary-color);
+}
+
+/* Match detail modal */
+.match-detail-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.match-detail-modal .modal-content {
+  background-color: var(--light-bg);
+  border-radius: 8px;
+  width: 80%;
+  max-width: 700px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.match-detail-modal .modal-header {
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.match-detail-modal .modal-header h3 {
+  margin: 0;
+  color: var(--secondary-color);
+}
+
+.match-detail-modal .close-modal {
+  font-size: 24px;
+  cursor: pointer;
+  color: #aaa;
+}
+
+.match-detail-modal .close-modal:hover {
+  color: white;
+}
+
+.match-detail-modal .modal-body {
+  padding: 20px;
+}
+
+.match-detail-modal .match-info {
+  margin-bottom: 20px;
+}
+
+.match-detail-modal .teams-container {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.match-detail-modal .team-detail {
+  flex: 1;
+  min-width: 250px;
+  background-color: rgba(0,0,0,0.2);
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.match-detail-modal .team-detail.winner {
+  border-color: var(--success-color);
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+}
+
+.match-detail-modal .team-detail h4 {
+  margin-top: 0;
+  color: white;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding-bottom: 10px;
+}
+
+.match-detail-modal .team-detail.winner h4 {
+  color: var(--success-color);
+}
+
+.match-detail-modal .team-heroes {
+  display: flex;
+  gap: 15px;
+}
+
+.match-detail-modal .picks, 
+.match-detail-modal .bans {
+  flex: 1;
+}
+
+.match-detail-modal h5 {
+  margin-bottom: 10px;
+  color: var(--secondary-color);
+}
+
+.match-detail-modal ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.match-detail-modal ul li {
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.match-detail-modal .modal-footer {
+  padding: 15px 20px;
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.match-detail-modal .close-btn {
+  padding: 8px 16px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.match-detail-modal .close-btn:hover {
+  background-color: var(--secondary-color);
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .matches-controls {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+  
+  .pagination {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .match-detail-modal .teams-container {
+    flex-direction: column;
+  }
+  
+  .match-detail-modal .modal-content {
+    width: 95%;
+    margin: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .matches-table th, 
+  .matches-table td {
+    padding: 8px;
+    font-size: 0.9rem;
+  }
+  
+  .matches-table button {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+  }
+  
+  .match-detail-modal .team-heroes {
+    flex-direction: column;
+  }
+}

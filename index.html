@@ -4,210 +4,415 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RoV Draft Helper</title>
+    <!-- External libraries -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- CSS files -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components/draft.css">
+    <link rel="stylesheet" href="css/components/heroes.css">
+    <link rel="stylesheet" href="css/components/matches.css">
+    <link rel="stylesheet" href="css/components/modal.css">
 </head>
 <body>
     <div class="container">
         <header>
             <h1><i class="fas fa-chess-knight"></i> RoV Draft Helper</h1>
             <p class="subtitle">ระบบแนะนำการดราฟฮีโร่เพื่อเพิ่มโอกาสชนะ</p>
+            <div class="main-menu">
+                <button id="draft-btn" class="menu-btn active">หน้าดราฟ</button>
+                <button id="history-btn" class="menu-btn">จัดการข้อมูลแมตช์</button>
+                <button id="heroes-btn" class="menu-btn">จัดการข้อมูลฮีโร่</button>
+                <button id="settings-btn" class="menu-btn">ตั้งค่า</button>
+            </div>
         </header>
 
         <main>
-            <div class="draft-panel">
-                <div class="team-selection">
-                    <h2>เลือกทีม</h2>
-                    <div class="team-selector">
-                        <button id="team1-btn" class="active">ทีม 1 (เลือกก่อน)</button>
-                        <button id="team2-btn">ทีม 2</button>
-                    </div>
-                </div>
-
-                <div class="draft-container">
-                    <div class="ban-phase">
-                        <h3>แบนฮีโร่ (สูงสุด 3 ตัว)</h3>
+             <!-- หน้าดราฟฮีโร่ -->
+             <div id="draft-page" class="page active">
+                <div class="draft-panel">
+                    <div class="team-selection">
+                        <h2>เลือกทีม</h2>
+                        <div class="team-selector">
+                            <button id="team1-btn" class="active">ทีม 1 (เลือกก่อน)</button>
+                            <button id="team2-btn">ทีม 2</button>
+                        </div>
                         
-                        <div class="teams-container">
-                            <div class="team team1">
-                                <h4>ทีม 1</h4>
-                                <div class="ban-slots">
-                                    <div class="ban-slot" data-team="1" data-slot="1">
-                                        <div class="hero-portrait empty">
-                                            <i class="fas fa-ban"></i>
+                        <div class="format-selector">
+                            <label>รูปแบบการแข่งขัน: </label>
+                            <select id="format-select">
+                                <option value="ranking">Ranking (แบน 3 ตัว)</option>
+                                <option value="global">Global (แบน 4 ตัว)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="draft-container">
+                        <div class="ban-phase">
+                            <h3>แบนฮีโร่ (สูงสุด 3 ตัว)</h3>
+                            
+                            <div class="teams-container">
+                                <div class="team team1">
+                                    <h4>ทีม 1</h4>
+                                    <div class="ban-slots">
+                                        <div class="ban-slot" data-team="1" data-slot="0">
+                                            <div class="hero-portrait empty">
+                                                <i class="fas fa-ban"></i>
+                                            </div>
+                                            <span>แบน 1</span>
                                         </div>
-                                        <span>แบน 1</span>
+                                        <div class="ban-slot" data-team="1" data-slot="1">
+                                            <div class="hero-portrait empty">
+                                                <i class="fas fa-ban"></i>
+                                            </div>
+                                            <span>แบน 2</span>
+                                        </div>
+                                        <div class="ban-slot" data-team="1" data-slot="2">
+                                            <div class="hero-portrait empty">
+                                                <i class="fas fa-ban"></i>
+                                            </div>
+                                            <span>แบน 3</span>
+                                        </div>
+                                        <div class="ban-slot" data-team="1" data-slot="3">
+                                            <div class="hero-portrait empty">
+                                                <i class="fas fa-ban"></i>
+                                            </div>
+                                            <span>แบน 4</span>
+                                        </div>
                                     </div>
-                                    <div class="ban-slot" data-team="1" data-slot="2">
-                                        <div class="hero-portrait empty">
-                                            <i class="fas fa-ban"></i>
+                                </div>
+                                
+                                <div class="team team2">
+                                    <h4>ทีม 2</h4>
+                                    <div class="ban-slots">
+                                        <div class="ban-slot" data-team="2" data-slot="0">
+                                            <div class="hero-portrait empty">
+                                                <i class="fas fa-ban"></i>
+                                            </div>
+                                            <span>แบน 1</span>
                                         </div>
-                                        <span>แบน 2</span>
-                                    </div>
-                                    <div class="ban-slot" data-team="1" data-slot="3">
-                                        <div class="hero-portrait empty">
-                                            <i class="fas fa-ban"></i>
+                                        <div class="ban-slot" data-team="2" data-slot="1">
+                                            <div class="hero-portrait empty">
+                                                <i class="fas fa-ban"></i>
+                                            </div>
+                                            <span>แบน 2</span>
                                         </div>
-                                        <span>แบน 3</span>
+                                        <div class="ban-slot" data-team="2" data-slot="2">
+                                            <div class="hero-portrait empty">
+                                                <i class="fas fa-ban"></i>
+                                            </div>
+                                            <span>แบน 3</span>
+                                        </div>
+                                        <div class="ban-slot" data-team="2" data-slot="3">
+                                            <div class="hero-portrait empty">
+                                                <i class="fas fa-ban"></i>
+                                            </div>
+                                            <span>แบน 4</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            
-                            <div class="team team2">
-                                <h4>ทีม 2</h4>
-                                <div class="ban-slots">
-                                    <div class="ban-slot" data-team="2" data-slot="1">
-                                        <div class="hero-portrait empty">
-                                            <i class="fas fa-ban"></i>
+                        </div>
+
+                        <div class="pick-phase">
+                            <h3>เลือกฮีโร่</h3>
+                            <div class="teams-container">
+                                <div class="team team1">
+                                    <h4>ทีม 1</h4>
+                                    <div class="pick-slots">
+                                        <div class="pick-slot" data-team="1" data-slot="0">
+                                            <div class="hero-portrait empty">
+                                                <i class="fas fa-plus"></i>
+                                            </div>
+                                            <span>1</span>
                                         </div>
-                                        <span>แบน 1</span>
+                                        <div class="pick-slot" data-team="1" data-slot="1">
+                                            <div class="hero-portrait empty">
+                                                <i class="fas fa-plus"></i>
+                                            </div>
+                                            <span>3</span>
+                                        </div>
+                                        <div class="pick-slot" data-team="1" data-slot="2">
+                                            <div class="hero-portrait empty">
+                                                <i class="fas fa-plus"></i>
+                                            </div>
+                                            <span>4</span>
+                                        </div>
+                                        <div class="pick-slot" data-team="1" data-slot="3">
+                                            <div class="hero-portrait empty">
+                                                <i class="fas fa-plus"></i>
+                                            </div>
+                                            <span>6</span>
+                                        </div>
+                                        <div class="pick-slot" data-team="1" data-slot="4">
+                                            <div class="hero-portrait empty">
+                                                <i class="fas fa-plus"></i>
+                                            </div>
+                                            <span>7</span>
+                                        </div>
                                     </div>
-                                    <div class="ban-slot" data-team="2" data-slot="2">
-                                        <div class="hero-portrait empty">
-                                            <i class="fas fa-ban"></i>
+                                </div>
+                                
+                                <div class="team team2">
+                                    <h4>ทีม 2</h4>
+                                    <div class="pick-slots">
+                                        <div class="pick-slot" data-team="2" data-slot="0">
+                                            <div class="hero-portrait empty">
+                                                <i class="fas fa-plus"></i>
+                                            </div>
+                                            <span>2</span>
                                         </div>
-                                        <span>แบน 2</span>
-                                    </div>
-                                    <div class="ban-slot" data-team="2" data-slot="3">
-                                        <div class="hero-portrait empty">
-                                            <i class="fas fa-ban"></i>
+                                        <div class="pick-slot" data-team="2" data-slot="1">
+                                            <div class="hero-portrait empty">
+                                                <i class="fas fa-plus"></i>
+                                            </div>
+                                            <span>2</span>
                                         </div>
-                                        <span>แบน 3</span>
+                                        <div class="pick-slot" data-team="2" data-slot="2">
+                                            <div class="hero-portrait empty">
+                                                <i class="fas fa-plus"></i>
+                                            </div>
+                                            <span>5</span>
+                                        </div>
+                                        <div class="pick-slot" data-team="2" data-slot="3">
+                                            <div class="hero-portrait empty">
+                                                <i class="fas fa-plus"></i>
+                                            </div>
+                                            <span>5</span>
+                                        </div>
+                                        <div class="pick-slot" data-team="2" data-slot="4">
+                                            <div class="hero-portrait empty">
+                                                <i class="fas fa-plus"></i>
+                                            </div>
+                                            <span>8</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="pick-phase">
-                        <h3>เลือกฮีโร่</h3>
-                        <div class="teams-container">
-                            <div class="team team1">
-                                <h4>ทีม 1</h4>
-                                <div class="pick-slots">
-                                    <div class="pick-slot" data-team="1" data-slot="1">
-                                        <div class="hero-portrait empty">
-                                            <i class="fas fa-plus"></i>
-                                        </div>
-                                        <span>1</span>
-                                    </div>
-                                    <div class="pick-slot" data-team="1" data-slot="2">
-                                        <div class="hero-portrait empty">
-                                            <i class="fas fa-plus"></i>
-                                        </div>
-                                        <span>3</span>
-                                    </div>
-                                    <div class="pick-slot" data-team="1" data-slot="3">
-                                        <div class="hero-portrait empty">
-                                            <i class="fas fa-plus"></i>
-                                        </div>
-                                        <span>4</span>
-                                    </div>
-                                    <div class="pick-slot" data-team="1" data-slot="4">
-                                        <div class="hero-portrait empty">
-                                            <i class="fas fa-plus"></i>
-                                        </div>
-                                        <span>6</span>
-                                    </div>
-                                    <div class="pick-slot" data-team="1" data-slot="5">
-                                        <div class="hero-portrait empty">
-                                            <i class="fas fa-plus"></i>
-                                        </div>
-                                        <span>7</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="team team2">
-                                <h4>ทีม 2</h4>
-                                <div class="pick-slots">
-                                    <div class="pick-slot" data-team="2" data-slot="1">
-                                        <div class="hero-portrait empty">
-                                            <i class="fas fa-plus"></i>
-                                        </div>
-                                        <span>2</span>
-                                    </div>
-                                    <div class="pick-slot" data-team="2" data-slot="2">
-                                        <div class="hero-portrait empty">
-                                            <i class="fas fa-plus"></i>
-                                        </div>
-                                        <span>2</span>
-                                    </div>
-                                    <div class="pick-slot" data-team="2" data-slot="3">
-                                        <div class="hero-portrait empty">
-                                            <i class="fas fa-plus"></i>
-                                        </div>
-                                        <span>5</span>
-                                    </div>
-                                    <div class="pick-slot" data-team="2" data-slot="4">
-                                        <div class="hero-portrait empty">
-                                            <i class="fas fa-plus"></i>
-                                        </div>
-                                        <span>5</span>
-                                    </div>
-                                    <div class="pick-slot" data-team="2" data-slot="5">
-                                        <div class="hero-portrait empty">
-                                            <i class="fas fa-plus"></i>
-                                        </div>
-                                        <span>8</span>
-                                    </div>
-                                </div>
+                    <div class="recommendation-panel">
+                        <h3>คำแนะนำสำหรับตำแหน่ง</h3>
+                        <div class="position-selector">
+                            <button class="position-btn active" data-position="Slayer">Dark Slayer</button>
+                            <button class="position-btn" data-position="Farm">Farm</button>
+                            <button class="position-btn" data-position="Mid">Mid</button>
+                            <button class="position-btn" data-position="Abyssal">Abyssal Dragon</button>
+                            <button class="position-btn" data-position="Support">Support</button>
+                        </div>
+                        
+                        <div class="hero-recommendations">
+                            <h4>ฮีโร่แนะนำ</h4>
+                            <div class="recommended-heroes">
+                                <!-- Heroes will be dynamically populated here -->
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <div class="recommendation-panel">
-                    <h3>คำแนะนำสำหรับตำแหน่ง</h3>
-                    <div class="position-selector">
-                        <button class="position-btn active" data-position="Slayer">Dark Slayer</button>
-                        <button class="position-btn" data-position="Farm">Farm</button>
-                        <button class="position-btn" data-position="Mid">Mid</button>
-                        <button class="position-btn" data-position="Abyssal">Abyssal Dragon</button>
-                        <button class="position-btn" data-position="Support">Support</button>
-                    </div>
-                    
-                    <div class="hero-recommendations">
-                        <h4>ฮีโร่แนะนำ</h4>
-                        <div class="recommended-heroes">
-                            <!-- Heroes will be dynamically populated here -->
-                        </div>
-                    </div>
-                    
-                    <div class="win-rate-prediction">
-                        <h4>อัตราชนะที่คาดการณ์</h4>
-                        <div class="win-rate">
-                            <div class="progress-bar">
-                                <div class="progress" style="width: 0%"></div>
+                        
+                        <div class="win-rate-prediction">
+                            <h4>อัตราชนะที่คาดการณ์</h4>
+                            <div class="win-rate">
+                                <div class="progress-bar">
+                                    <div class="progress" style="width: 0%"></div>
+                                </div>
+                                <span class="percentage">0%</span>
                             </div>
-                            <span class="percentage">0%</span>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <div class="hero-selection-modal" id="heroSelectionModal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3>เลือกฮีโร่</h3>
-                        <button class="close-btn">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="search-filter">
-                            <input type="text" placeholder="ค้นหาฮีโร่..." id="heroSearch">
-                            <div class="filter-buttons">
-                                <button class="filter-btn active" data-filter="all">ทั้งหมด</button>
-                                <button class="filter-btn" data-filter="Assassin">Assassin</button>
-                                <button class="filter-btn" data-filter="Fighter">Fighter</button>
-                                <button class="filter-btn" data-filter="Mage">Mage</button>
-                                <button class="filter-btn" data-filter="Carry">Carry</button>
-                                <button class="filter-btn" data-filter="Support">Support</button>
-                                <button class="filter-btn" data-filter="Tank">Tank</button>
+            
+            <!-- หน้าจัดการข้อมูลแมตช์ -->
+            <div id="history-page" class="page">
+                <div class="panel">
+                    <h2>จัดการข้อมูลแมตช์</h2>
+                    
+                    <div class="history-controls">
+                        <div class="import-section">
+                            <h3>นำเข้าข้อมูลแมตช์</h3>
+                            <div class="import-options">
+                                <div class="import-option">
+                                    <h4>นำเข้าจาก URL</h4>
+                                    <p class="small-note">* หมายเหตุ: เนื่องจากข้อจำกัด CORS ในเบราว์เซอร์ อาจไม่สามารถดึงข้อมูลได้โดยตรง</p>
+                                    <input type="text" id="import-url" placeholder="ใส่ URL ของ Liquipedia">
+                                    <button id="fetch-btn" class="action-btn">ดึงข้อมูล</button>
+                                </div>
+                                
+                                <div class="import-option">
+                                    <h4>นำเข้าจากไฟล์ Excel</h4>
+                                    <input type="file" id="import-file" accept=".xlsx, .xls">
+                                    <button id="import-file-btn" class="action-btn">นำเข้าข้อมูล</button>
+                                </div>
+                                
+                                <div class="import-option">
+                                    <h4>เพิ่มข้อมูลเอง</h4>
+                                    <button id="add-match-btn" class="action-btn">เพิ่มแมตช์ใหม่</button>
+                                </div>
                             </div>
                         </div>
-                        <div class="heroes-grid">
-                            <!-- Heroes will be dynamically populated here -->
+                        
+                        <div class="matches-section">
+                            <h3>ข้อมูลแมตช์ทั้งหมด</h3>
+                            <div class="table-controls">
+                                <div class="search-box">
+                                    <input type="text" id="match-search" placeholder="ค้นหาแมตช์...">
+                                </div>
+                                <div class="filter-options">
+                                    <select id="tournament-filter">
+                                        <option value="">ทุกทัวร์นาเมนต์</option>
+                                    </select>
+                                    <select id="team-filter">
+                                        <option value="">ทุกทีม</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="matches-table-container">
+                                <table class="matches-table">
+                                    <thead>
+                                        <tr>
+                                            <th>วันที่</th>
+                                            <th>ทัวร์นาเมนต์</th>
+                                            <th>ทีม 1</th>
+                                            <th>ทีม 2</th>
+                                            <th>ผู้ชนะ</th>
+                                            <th>การจัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="matches-tbody">
+                                        <!-- ข้อมูลแมตช์จะถูกใส่ที่นี่ -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="matches-controls">
+                                <div class="pagination">
+                                    <button id="prev-page" class="page-btn">ก่อนหน้า</button>
+                                    <span id="page-info">หน้า 1 จาก 1</span>
+                                    <button id="next-page" class="page-btn">ถัดไป</button>
+                                </div>
+                                <button id="delete-all-matches-btn" class="action-btn warning">ลบข้อมูลแมตช์ทั้งหมด</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- หน้าจัดการข้อมูลฮีโร่ -->
+            <div id="heroes-page" class="page">
+                <div class="panel">
+                    <h2>จัดการข้อมูลฮีโร่</h2>
+                    
+                    <div class="heroes-controls">
+                        <!-- ส่วนนำเข้าหรือเพิ่มข้อมูลฮีโร่ -->
+                        <div class="import-section">
+                            <h3>นำเข้าหรือเพิ่มข้อมูลฮีโร่</h3>
+                            <div class="import-options">
+                                <div class="import-option">
+                                    <h4>นำเข้าจากไฟล์ Excel</h4>
+                                    <p class="small-note">* รูปแบบคอลัมน์ควรเป็น: ชื่อฮีโร่, คลาส (ใช้ | คั่นคลาสหลายคลาส), พาธรูปภาพ</p>
+                                    <input type="file" id="import-heroes-file" accept=".xlsx, .xls">
+                                    <button id="import-heroes-btn" class="action-btn">นำเข้าข้อมูลฮีโร่</button>
+                                </div>
+                                
+                                <div class="import-option">
+                                    <h4>เพิ่มฮีโร่เอง</h4>
+                                    <div class="hero-form">
+                                        <div class="form-group">
+                                            <label for="hero-name">ชื่อฮีโร่:</label>
+                                            <input type="text" id="hero-name" placeholder="ชื่อฮีโร่">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="hero-class">คลาส:</label>
+                                            <select id="hero-class">
+                                                <option value="Assassin">Assassin</option>
+                                                <option value="Fighter">Fighter</option>
+                                                <option value="Mage">Mage</option>
+                                                <option value="Carry">Carry</option>
+                                                <option value="Support">Support</option>
+                                                <option value="Tank">Tank</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="hero-image">รูปภาพ:</label>
+                                            <input type="file" id="hero-image" accept="image/*">
+                                            <div class="image-preview" id="image-preview">
+                                                <span>ตัวอย่างรูปภาพ</span>
+                                            </div>
+                                        </div>
+                                        <button id="add-hero-btn" class="action-btn">เพิ่มฮีโร่</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- ส่วนตารางฮีโร่ -->
+                        <div class="heroes-section">
+                            <h3>ข้อมูลฮีโร่ทั้งหมด</h3>
+                            <div class="table-controls">
+                                <div class="search-box">
+                                    <input type="text" id="hero-search" placeholder="ค้นหาฮีโร่...">
+                                </div>
+                                <div class="filter-options">
+                                    <select id="class-filter">
+                                        <option value="">ทุกคลาส</option>
+                                        <option value="Assassin">Assassin</option>
+                                        <option value="Fighter">Fighter</option>
+                                        <option value="Mage">Mage</option>
+                                        <option value="Carry">Carry</option>
+                                        <option value="Support">Support</option>
+                                        <option value="Tank">Tank</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="heroes-table-container">
+                                <table class="heroes-table">
+                                    <thead>
+                                        <tr>
+                                            <th>รูปภาพ</th>
+                                            <th>ชื่อฮีโร่</th>
+                                            <th>คลาส</th>
+                                            <th>การจัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="heroes-tbody">
+                                        <!-- ข้อมูลฮีโร่จะถูกใส่ที่นี่ -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="heroes-table-controls">
+                                <button id="delete-all-heroes-btn" class="action-btn warning">ลบข้อมูลฮีโร่ทั้งหมด</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- หน้าตั้งค่า -->
+            <div id="settings-page" class="page">
+                <div class="panel">
+                    <h2>ตั้งค่า</h2>
+                    
+                    <div class="settings-section">
+                        <h3>รูปแบบการแข่งขัน</h3>
+                        <div class="setting-option">
+                            <label for="default-format">รูปแบบเริ่มต้น:</label>
+                            <select id="default-format">
+                                <option value="ranking">Ranking (แบน 3 ตัว)</option>
+                                <option value="global">Global (แบน 4 ตัว)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h3>ข้อมูล</h3>
+                        <div class="setting-option">
+                            <button id="export-data-btn" class="action-btn">ส่งออกข้อมูล</button>
+                            <button id="import-data-btn" class="action-btn">นำเข้าข้อมูล</button>
+                            <button id="clear-data-btn" class="action-btn warning">ล้างข้อมูลทั้งหมด</button>
                         </div>
                     </div>
                 </div>
@@ -220,15 +425,67 @@
         </footer>
     </div>
 
+    <!-- Hero Selection Modal -->
+    <div class="hero-selection-modal" id="heroSelectionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>เลือกฮีโร่</h3>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Current selection information -->
+                <div class="selection-info" id="selectionInfo">
+                    <span>กำลังเลือกฮีโร่สำหรับ: <strong id="selectionTeam">ทีม 1</strong> - <strong id="selectionType">แบน</strong> ตำแหน่งที่ <strong id="selectionSlot">1</strong></span>
+                </div>
+                
+                <div class="search-filter">
+                    <div class="search-wrapper">
+                        <input type="text" placeholder="ค้นหาฮีโร่..." id="heroSearch">
+                    </div>
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="all">ทั้งหมด</button>
+                        <button class="filter-btn" data-filter="Assassin">Assassin</button>
+                        <button class="filter-btn" data-filter="Fighter">Fighter</button>
+                        <button class="filter-btn" data-filter="Mage">Mage</button>
+                        <button class="filter-btn" data-filter="Carry">Carry</button>
+                        <button class="filter-btn" data-filter="Support">Support</button>
+                        <button class="filter-btn" data-filter="Tank">Tank</button>
+                    </div>
+                </div>
+                
+                <!-- Heroes grid -->
+                <div class="heroes-grid">
+                    <!-- Heroes will be dynamically populated here -->
+                </div>
+                
+                <!-- Empty state when no heroes found -->
+                <div class="empty-state" id="emptyState">
+                    <i class="fas fa-search"></i>
+                    <p>ไม่พบฮีโร่ที่ตรงกับการค้นหา</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Loading overlay -->
     <div class="loading-overlay">
         <div class="spinner"></div>
         <p>กำลังโหลดข้อมูล...</p>
     </div>
 
-    <script src="js/data.js"></script>
-    <script src="js/analytics.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/app.js"></script>
+    <!-- External libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- Application modules - Load in correct order -->
+    <script type="module" src="js/data/default-data.js"></script>
+    <script type="module" src="js/data/data-manager.js"></script>
+    <script type="module" src="js/analytics/analytics-manager.js"></script>
+    <script type="module" src="js/ui/components/draft-ui.js"></script>
+    <script type="module" src="js/ui/components/matches-ui.js"></script>
+    <script type="module" src="js/ui/ui-manager.js"></script>
+    <script type="module" src="js/heroes/hero-manager.js"></script>
+    <script type="module" src="js/heroes/hero-selection.js"></script>
+    <script type="module" src="js/matches/matches-manager.js"></script>
+    <script type="module" src="js/app.js"></script>
 </body>
 </html>
