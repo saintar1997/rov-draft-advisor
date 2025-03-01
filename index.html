@@ -4,16 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RoV Draft Helper</title>
-    <!-- External libraries -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&display=swap" rel="stylesheet">
-    
-    <!-- CSS files -->
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/components/draft.css">
-    <link rel="stylesheet" href="css/components/heroes.css">
-    <link rel="stylesheet" href="css/components/matches.css">
-    <link rel="stylesheet" href="css/components/modal.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div class="container">
@@ -299,13 +292,13 @@
                 </div>
             </div>
             
-            <!-- หน้าจัดการข้อมูลฮีโร่ -->
+            <!-- หน้าจัดการข้อมูลฮีโร่ (โครงสร้างใหม่) -->
             <div id="heroes-page" class="page">
                 <div class="panel">
                     <h2>จัดการข้อมูลฮีโร่</h2>
                     
                     <div class="heroes-controls">
-                        <!-- ส่วนนำเข้าหรือเพิ่มข้อมูลฮีโร่ -->
+                        <!-- ส่วนนำเข้าหรือเพิ่มข้อมูลฮีโร่ (ยังอยู่ด้านบน) -->
                         <div class="import-section">
                             <h3>นำเข้าหรือเพิ่มข้อมูลฮีโร่</h3>
                             <div class="import-options">
@@ -347,7 +340,7 @@
                             </div>
                         </div>
                         
-                        <!-- ส่วนตารางฮีโร่ -->
+                        <!-- ส่วนตารางฮีโร่ (ยังอยู่ด้านล่าง) -->
                         <div class="heroes-section">
                             <h3>ข้อมูลฮีโร่ทั้งหมด</h3>
                             <div class="table-controls">
@@ -425,7 +418,7 @@
         </footer>
     </div>
 
-    <!-- Hero Selection Modal -->
+    <!-- Enhanced Hero Selection Modal -->
     <div class="hero-selection-modal" id="heroSelectionModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -467,25 +460,809 @@
         </div>
     </div>
 
+
     <!-- Loading overlay -->
     <div class="loading-overlay">
         <div class="spinner"></div>
         <p>กำลังโหลดข้อมูล...</p>
     </div>
 
+    <!-- Update these lines at the bottom of your index.html file -->
+
     <!-- External libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <!-- Application scripts - THIS ORDER IS CRITICAL -->
+    <!-- Core data and functionality first -->
+    <script src="js/data.js"></script>
+    <script src="js/analytics.js"></script>
+    <script src="js/ui.js"></script>
+
+    <!-- Component scripts -->
+    <script src="js/hero-manager.js"></script>
+    <script src="js/hero-selection-controller.js"></script>
+    <script src="js/matches.js"></script>
+
+    <!-- Integration script -->
+    <script src="js/integration.js"></script>
+
+    <!-- Main application entry point MUST BE LAST -->
+    <script src="js/app.js"></script>
     
-    <!-- Application modules - Load in correct order -->
-    <script type="module" src="js/data/default-data.js"></script>
-    <script type="module" src="js/data/data-manager.js"></script>
-    <script type="module" src="js/analytics/analytics-manager.js"></script>
-    <script type="module" src="js/ui/components/draft-ui.js"></script>
-    <script type="module" src="js/ui/components/matches-ui.js"></script>
-    <script type="module" src="js/ui/ui-manager.js"></script>
-    <script type="module" src="js/heroes/hero-manager.js"></script>
-    <script type="module" src="js/heroes/hero-selection.js"></script>
-    <script type="module" src="js/matches/matches-manager.js"></script>
-    <script type="module" src="js/app.js"></script>
+    <!-- Hero management script -->
+    <script>
+    // แสดงข้อมูลฮีโร่ในตาราง
+    // Enhanced version of renderHeroesTable with styling for different classes
+    function renderHeroesTable() {
+        const tbody = document.getElementById('heroes-tbody');
+        if (!tbody) return;
+        
+        // ล้างตาราง
+        tbody.innerHTML = '';
+        
+        // ดึงข้อมูลฮีโร่
+        let heroes = {};
+        try {
+            heroes = JSON.parse(localStorage.getItem('rovHeroData')) || {};
+        } catch (error) {
+            console.error('Error parsing hero data:', error);
+            heroes = {};
+        }
+        
+        // ดึงข้อมูลรูปภาพ
+        let heroImages = {};
+        try {
+            heroImages = JSON.parse(localStorage.getItem('rovHeroImages')) || {};
+        } catch (error) {
+            console.error('Error parsing hero images:', error);
+            heroImages = {};
+        }
+        
+        // สร้างอาร์เรย์ของฮีโร่ทั้งหมด (ไม่ซ้ำกัน)
+        const allHeroes = [];
+        const processedHeroes = new Set(); // ใช้ Set เพื่อเก็บชื่อฮีโร่ที่ได้รับการประมวลผลแล้ว
+        
+        for (const [heroClass, heroList] of Object.entries(heroes)) {
+            heroList.forEach(heroName => {
+                // ตรวจสอบว่าฮีโร่นี้ได้รับการประมวลผลแล้วหรือยัง
+                if (!processedHeroes.has(heroName)) {
+                    processedHeroes.add(heroName);
+                    
+                    // หาคลาสทั้งหมดของฮีโร่นี้
+                    const heroClasses = [];
+                    for (const [cls, list] of Object.entries(heroes)) {
+                        if (list.includes(heroName)) {
+                            heroClasses.push(cls);
+                        }
+                    }
+                    
+                    allHeroes.push({
+                        name: heroName,
+                        classes: heroClasses, // เก็บเป็นอาร์เรย์เพื่อง่ายต่อการจัดรูปแบบ
+                        classText: heroClasses.join(' | '), // สร้างข้อความแสดงคลาสทั้งหมด
+                        primaryClass: heroClasses[0], // คลาสหลัก (คลาสแรก)
+                        image: heroImages[heroName] || `https://via.placeholder.com/60?text=${encodeURIComponent(heroName)}`
+                    });
+                }
+            });
+        }
+        
+        // เรียงตามชื่อ
+        allHeroes.sort((a, b) => a.name.localeCompare(b.name));
+        
+        // ฟังก์ชันกำหนดสีตามคลาสฮีโร่
+        function getClassColor(heroClass) {
+            const classColors = {
+                'Assassin': '#ff5252', // สีแดง
+                'Fighter': '#ff9800', // สีส้ม
+                'Mage': '#2196f3',  // สีฟ้า
+                'Carry': '#9c27b0', // สีม่วง
+                'Support': '#4caf50', // สีเขียว
+                'Tank': '#607d8b'   // สีเทา
+            };
+            
+            return classColors[heroClass] || '#eeeeee'; // สีเริ่มต้นถ้าไม่พบคลาส
+        }
+        
+        // แสดงในตาราง
+        allHeroes.forEach(hero => {
+            const row = document.createElement('tr');
+            
+            // กำหนดสีพื้นหลังตามคลาสหลัก (ถ้ามีคลาสเดียว) หรือไล่เฉดสีหากมีหลายคลาส
+            if (hero.classes.length > 1) {
+                // มีหลายคลาส ใช้ gradient
+                const gradientColors = hero.classes.map(cls => getClassColor(cls)).join(', ');
+                row.style.background = `linear-gradient(90deg, ${gradientColors})`;
+                row.style.opacity = '0.85'; // ลดความเข้มของสีลงเล็กน้อย
+            } else {
+                // มีคลาสเดียว ให้ใช้สีอ่อนลง
+                row.style.backgroundColor = `${getClassColor(hero.primaryClass)}33`; // เพิ่ม 33 ด้านหลังสีเพื่อลดความโปร่งใสลง
+            }
+            
+            const imageCell = document.createElement('td');
+            const img = document.createElement('img');
+            img.src = hero.image;
+            img.alt = hero.name;
+            img.style.borderRadius = '8px'; // ทำให้รูปโค้งมน
+            // เพิ่มเงาให้กับรูปภาพ
+            img.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+            imageCell.appendChild(img);
+            
+            const nameCell = document.createElement('td');
+            nameCell.textContent = hero.name;
+            nameCell.style.fontWeight = 'bold';
+            
+            const classCell = document.createElement('td');
+            
+            // สร้าง span สำหรับแต่ละคลาส
+            hero.classes.forEach((cls, index) => {
+                const classSpan = document.createElement('span');
+                classSpan.textContent = cls;
+                classSpan.style.display = 'inline-block';
+                classSpan.style.padding = '2px 8px';
+                classSpan.style.margin = '2px';
+                classSpan.style.borderRadius = '4px';
+                classSpan.style.backgroundColor = getClassColor(cls);
+                classSpan.style.color = 'white';
+                classSpan.style.fontSize = '0.9em';
+                
+                classCell.appendChild(classSpan);
+                
+                // เพิ่ม separator ถ้าไม่ใช่คลาสสุดท้าย
+                if (index < hero.classes.length - 1) {
+                    const separator = document.createElement('span');
+                    separator.textContent = '|';
+                    separator.style.margin = '0 5px';
+                    separator.style.color = '#aaa';
+                    classCell.appendChild(separator);
+                }
+            });
+            
+            const actionCell = document.createElement('td');
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.textContent = 'ลบ';
+            deleteBtn.addEventListener('click', () => {
+                deleteHero(hero.name);
+            });
+            
+            // ปรับแต่งปุ่มลบให้ดูดีขึ้น
+            deleteBtn.style.backgroundColor = '#f44336';
+            deleteBtn.style.color = 'white';
+            deleteBtn.style.border = 'none';
+            deleteBtn.style.padding = '5px 10px';
+            deleteBtn.style.borderRadius = '4px';
+            deleteBtn.style.cursor = 'pointer';
+            deleteBtn.style.transition = 'background-color 0.3s';
+            
+            // เพิ่ม hover effect
+            deleteBtn.addEventListener('mouseover', () => {
+                deleteBtn.style.backgroundColor = '#d32f2f';
+            });
+            deleteBtn.addEventListener('mouseout', () => {
+                deleteBtn.style.backgroundColor = '#f44336';
+            });
+            
+            actionCell.appendChild(deleteBtn);
+            
+            row.appendChild(imageCell);
+            row.appendChild(nameCell);
+            row.appendChild(classCell);
+            row.appendChild(actionCell);
+            
+            // เพิ่ม hover effect สำหรับแถว
+            row.style.transition = 'transform 0.2s ease';
+            row.addEventListener('mouseover', () => {
+                row.style.transform = 'translateY(-2px)';
+                row.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+            });
+            row.addEventListener('mouseout', () => {
+                row.style.transform = '';
+                row.style.boxShadow = '';
+            });
+            
+            tbody.appendChild(row);
+        });
+        
+        // ถ้าไม่มีฮีโร่เลย
+        if (allHeroes.length === 0) {
+            const emptyRow = document.createElement('tr');
+            const emptyCell = document.createElement('td');
+            emptyCell.colSpan = 4;
+            emptyCell.textContent = 'ไม่พบข้อมูลฮีโร่ กรุณาเพิ่มหรือนำเข้าข้อมูลฮีโร่';
+            emptyCell.style.textAlign = 'center';
+            emptyCell.style.padding = '20px';
+            emptyCell.style.color = '#999';
+            emptyRow.appendChild(emptyCell);
+            tbody.appendChild(emptyRow);
+        }
+    }
+
+    // ตัวกรองฮีโร่ที่ปรับปรุงแล้ว
+    function filterHeroes() {
+        const searchText = document.getElementById('hero-search').value.toLowerCase();
+        const classFilter = document.getElementById('class-filter').value;
+        
+        const rows = document.querySelectorAll('#heroes-tbody tr');
+        
+        rows.forEach(row => {
+            const nameCell = row.querySelector('td:nth-child(2)');
+            const classCell = row.querySelector('td:nth-child(3)');
+            
+            if (!nameCell || !classCell) return;
+            
+            const name = nameCell.textContent.toLowerCase();
+            
+            // ตรวจสอบคลาสจาก spans ภายใน classCell
+            const classSpans = classCell.querySelectorAll('span');
+            const heroClasses = Array.from(classSpans)
+                .filter(span => span.textContent !== '|') // กรองเครื่องหมาย | ออก
+                .map(span => span.textContent);
+            
+            const matchesSearch = name.includes(searchText);
+            const matchesClass = classFilter === '' || heroClasses.includes(classFilter);
+            
+            row.style.display = matchesSearch && matchesClass ? '' : 'none';
+        });
+    }
+
+    // เพิ่มสไตล์ CSS
+    function addHeroTableStyles() {
+        // สร้าง style element
+        const style = document.createElement('style');
+        style.textContent = `
+            /* Hero table styles */
+            .heroes-table {
+                border-collapse: separate;
+                border-spacing: 0;
+                width: 100%;
+                border-radius: 8px;
+                overflow: hidden;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            }
+            
+            .heroes-table th {
+                background-color: #2e3192;
+                color: white;
+                padding: 12px 15px;
+                text-align: left;
+                font-weight: bold;
+                position: sticky;
+                top: 0;
+                z-index: 10;
+            }
+            
+            .heroes-table td {
+                padding: 10px 15px;
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+            }
+            
+            .heroes-table tr:last-child td {
+                border-bottom: none;
+            }
+            
+            .heroes-table td img {
+                width: 60px;
+                height: 60px;
+                object-fit: cover;
+                border-radius: 8px;
+                transition: transform 0.2s;
+            }
+            
+            .heroes-table td img:hover {
+                transform: scale(1.1);
+            }
+            
+            /* เพิ่มสไตล์สำหรับ class badges */
+            .class-badge {
+                display: inline-block;
+                padding: 2px 8px;
+                margin: 2px;
+                border-radius: 4px;
+                color: white;
+                font-size: 0.9em;
+            }
+            
+            /* ลูกศรสำหรับการเรียงข้อมูล */
+            .heroes-table th.sortable {
+                cursor: pointer;
+            }
+            
+            .heroes-table th.sortable:after {
+                content: '\\2195';
+                margin-left: 5px;
+            }
+            
+            .heroes-table th.sortable.sort-asc:after {
+                content: '\\2191';
+            }
+            
+            .heroes-table th.sortable.sort-desc:after {
+                content: '\\2193';
+            }
+            
+            /* สไตล์สำหรับการกรอง */
+            .table-controls {
+                margin-bottom: 15px;
+                display: flex;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            
+            .table-controls .search-box {
+                flex: 1;
+                min-width: 200px;
+            }
+            
+            .table-controls .search-box input {
+                width: 100%;
+                padding: 8px 12px;
+                border-radius: 4px;
+                border: 1px solid rgba(255,255,255,0.2);
+                background-color: rgba(0,0,0,0.2);
+                color: white;
+            }
+            
+            .table-controls .filter-options select {
+                padding: 8px 12px;
+                border-radius: 4px;
+                border: 1px solid rgba(255,255,255,0.2);
+                background-color: rgba(0,0,0,0.2);
+                color: white;
+            }
+            
+            /* เพิ่มเอฟเฟกต์เมื่อชี้ที่แถวในตาราง */
+            .heroes-table tr {
+                transition: all 0.2s ease;
+            }
+            
+            /* ปุ่มลบและปุ่มอื่นๆ */
+            .heroes-table .delete-btn {
+                background-color: #f44336;
+                color: white;
+                border: none;
+                padding: 5px 10px;
+                border-radius: 4px;
+                cursor: pointer;
+                transition: background-color 0.3s;
+            }
+            
+            .heroes-table .delete-btn:hover {
+                background-color: #d32f2f;
+            }
+        `;
+        
+        // เพิ่ม style ลงใน head
+        document.head.appendChild(style);
+    }
+
+    // เพิ่ม styles เมื่อหน้าเว็บโหลดเสร็จ
+    document.addEventListener('DOMContentLoaded', function() {
+        addHeroTableStyles();
+    });
+
+    // ลบฮีโร่
+    function deleteHero(heroName) {
+        if (confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบฮีโร่ ${heroName}?`)) {
+            try {
+                // ดึงข้อมูลฮีโร่
+                let heroes = {};
+                try {
+                    heroes = JSON.parse(localStorage.getItem('rovHeroData')) || {};
+                } catch (error) {
+                    console.error('Error parsing hero data:', error);
+                    heroes = {};
+                }
+                
+                // ลบฮีโร่จากทุกคลาส
+                for (const heroClass in heroes) {
+                    heroes[heroClass] = heroes[heroClass].filter(name => name !== heroName);
+                    
+                    // ถ้าคลาสไม่มีฮีโร่แล้ว ก็ลบคลาสนั้นออก
+                    if (heroes[heroClass].length === 0) {
+                        delete heroes[heroClass];
+                    }
+                }
+                
+                // บันทึกข้อมูลฮีโร่
+                localStorage.setItem('rovHeroData', JSON.stringify(heroes));
+                
+                // ลบรูปภาพ
+                let heroImages = {};
+                try {
+                    heroImages = JSON.parse(localStorage.getItem('rovHeroImages')) || {};
+                    if (heroImages[heroName]) {
+                        delete heroImages[heroName];
+                        localStorage.setItem('rovHeroImages', JSON.stringify(heroImages));
+                    }
+                } catch (error) {
+                    console.error('Error parsing hero images:', error);
+                }
+                
+                // รีเฟรชตาราง
+                renderHeroesTable();
+                
+                alert(`ลบฮีโร่ ${heroName} เรียบร้อย`);
+            } catch (error) {
+                console.error('Error deleting hero:', error);
+                alert('เกิดข้อผิดพลาดในการลบฮีโร่');
+            }
+        }
+    }
+
+    // กรองฮีโร่
+    function filterHeroes() {
+        const searchText = document.getElementById('hero-search').value.toLowerCase();
+        const classFilter = document.getElementById('class-filter').value;
+        
+        const rows = document.querySelectorAll('#heroes-tbody tr');
+        
+        rows.forEach(row => {
+            const nameCell = row.querySelector('td:nth-child(2)');
+            const classCell = row.querySelector('td:nth-child(3)');
+            
+            if (!nameCell || !classCell) return;
+            
+            const name = nameCell.textContent.toLowerCase();
+            const heroClasses = classCell.textContent.split(' | '); // แยกคลาสที่มีหลายค่า
+            
+            const matchesSearch = name.includes(searchText);
+            const matchesClass = classFilter === '' || heroClasses.includes(classFilter);
+            
+            row.style.display = matchesSearch && matchesClass ? '' : 'none';
+        });
+    }
+
+    // นำเข้าฮีโร่จากไฟล์ Excel
+    document.getElementById('import-heroes-btn').addEventListener('click', async function() {
+        console.log("Import heroes button clicked");
+        const fileInput = document.getElementById('import-heroes-file');
+        const file = fileInput.files[0];
+        
+        if (!file) {
+            alert('กรุณาเลือกไฟล์ก่อน');
+            return;
+        }
+        
+        if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+            alert('กรุณาเลือกไฟล์ Excel (.xlsx หรือ .xls) เท่านั้น');
+            return;
+        }
+        
+        console.log("Starting import from Excel file:", file.name);
+        
+        // ถามว่าต้องการลบข้อมูลเก่าทั้งหมดหรือไม่
+        const clearAll = confirm('คุณต้องการลบข้อมูลฮีโร่เก่าทั้งหมดและนำเข้าใหม่หรือไม่?\n\nกด "OK" เพื่อลบข้อมูลเก่าและนำเข้าใหม่ทั้งหมด\nกด "Cancel" เพื่อเพิ่มข้อมูลเข้าไปในข้อมูลเดิม');
+        
+        // แสดงสถานะกำลังโหลด
+        document.querySelector('.loading-overlay').style.display = 'flex';
+        
+        try {
+            // นำเข้า SheetJS (XLSX) ถ้ายังไม่ได้นำเข้า
+            if (typeof XLSX === 'undefined') {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+                document.head.appendChild(script);
+                
+                // รอให้โหลดเสร็จ
+                await new Promise((resolve, reject) => {
+                    script.onload = resolve;
+                    script.onerror = reject;
+                });
+            }
+            
+            // อ่านไฟล์ Excel
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // สมมติว่าชีทแรกมีข้อมูลที่ต้องการ
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    
+                    // แปลงเป็น JSON
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    
+                    // ตรวจสอบว่ามีข้อมูลหรือไม่
+                    if (jsonData.length <= 1) {
+                        alert('ไม่พบข้อมูลในไฟล์');
+                        document.querySelector('.loading-overlay').style.display = 'none';
+                        return;
+                    }
+                    
+                    // แปลงข้อมูลเป็นรูปแบบที่ต้องการ
+                    let heroes = {};
+                    
+                    // ถ้าเลือกลบข้อมูลเก่าทั้งหมด
+                    if (clearAll) {
+                        // ล้างข้อมูลเก่า
+                        heroes = {};
+                        localStorage.removeItem('rovHeroImages');
+                        localStorage.setItem('rovHeroImages', JSON.stringify({}));
+                    } else {
+                        // ใช้ข้อมูลเดิม
+                        try {
+                            heroes = JSON.parse(localStorage.getItem('rovHeroData')) || {};
+                        } catch (error) {
+                            console.error('Error parsing hero data:', error);
+                            heroes = {};
+                        }
+                    }
+                    
+                    // วนลูปอ่านข้อมูลแต่ละแถว (ข้ามแถวแรกที่เป็นหัวตาราง)
+                    let heroCount = 0;
+                    let processedHeroes = new Set(); // เก็บชื่อฮีโร่ที่นับแล้ว
+                    
+                    for (let i = 1; i < jsonData.length; i++) {
+                        const row = jsonData[i];
+                        
+                        // ตรวจสอบว่าแถวมีข้อมูลครบหรือไม่
+                        if (row.length < 2) continue;
+                        
+                        // โครงสร้าง: HeroName, Class, ImagePath
+                        const heroName = row[0];
+                        const heroClassesRaw = row[1];
+                        const imagePath = row[2] || '';
+                        
+                        if (!heroName || !heroClassesRaw) continue;
+                        
+                        // แยกคลาสออกมา (กรณีที่ฮีโร่มีหลายคลาส)
+                        const heroClasses = heroClassesRaw.split('|').map(cls => cls.trim());
+                        
+                        // เพิ่มฮีโร่ในแต่ละคลาส
+                        for (const heroClass of heroClasses) {
+                            // ตรวจสอบว่ามีคลาสนี้หรือยัง
+                            if (!heroes[heroClass]) {
+                                heroes[heroClass] = [];
+                            }
+                            
+                            // ตรวจสอบว่ามีฮีโร่นี้ในคลาสนี้หรือยัง
+                            if (!heroes[heroClass].includes(heroName)) {
+                                heroes[heroClass].push(heroName);
+                            }
+                        }
+                        
+                        // นับฮีโร่ใหม่เฉพาะที่ยังไม่เคยนับ
+                        if (!processedHeroes.has(heroName)) {
+                            heroCount++;
+                            processedHeroes.add(heroName);
+                        }
+                        
+                        // ถ้ามี imagePath ก็บันทึกด้วย
+                        if (imagePath) {
+                            let heroImages = {};
+                            try {
+                                heroImages = JSON.parse(localStorage.getItem('rovHeroImages')) || {};
+                            } catch (error) {
+                                console.error('Error parsing hero images:', error);
+                                heroImages = {};
+                            }
+                            
+                            // เก็บพาธรูปภาพ
+                            heroImages[heroName] = imagePath;
+                            
+                            // บันทึกข้อมูลรูปภาพ
+                            localStorage.setItem('rovHeroImages', JSON.stringify(heroImages));
+                        }
+                    }
+                    
+                    // บันทึกข้อมูลฮีโร่
+                    localStorage.setItem('rovHeroData', JSON.stringify(heroes));
+                    
+                    // รีเฟรชตาราง
+                    renderHeroesTable();
+                    
+                    // รีเซ็ตฟอร์ม
+                    fileInput.value = '';
+                    
+                    const message = clearAll ? 
+                        `ลบข้อมูลเก่าและนำเข้าข้อมูลฮีโร่ใหม่สำเร็จ เพิ่มฮีโร่ ${heroCount} ตัว` : 
+                        `นำเข้าข้อมูลฮีโร่สำเร็จ เพิ่มฮีโร่ใหม่ ${heroCount} ตัว`;
+                    
+                    alert(message);
+                } catch (error) {
+                    console.error('Error parsing Excel file:', error);
+                    alert('เกิดข้อผิดพลาดในการอ่านไฟล์ Excel: ' + error.message);
+                } finally {
+                    document.querySelector('.loading-overlay').style.display = 'none';
+                }
+            };
+            
+            reader.onerror = function() {
+                alert('เกิดข้อผิดพลาดในการอ่านไฟล์');
+                document.querySelector('.loading-overlay').style.display = 'none';
+            };
+            
+            // อ่านไฟล์เป็น ArrayBuffer
+            reader.readAsArrayBuffer(file);
+            
+        } catch (error) {
+            console.error('Error importing heroes from file:', error);
+            alert('เกิดข้อผิดพลาดในการนำเข้าฮีโร่: ' + error.message);
+            document.querySelector('.loading-overlay').style.display = 'none';
+        }
+    });
+
+    // แสดงตัวอย่างรูปภาพก่อนอัปโหลด
+    document.getElementById('hero-image').addEventListener('change', function(e) {
+        const preview = document.getElementById('image-preview');
+        preview.innerHTML = '';
+        
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            
+            reader.onload = function(event) {
+                const img = document.createElement('img');
+                img.src = event.target.result;
+                preview.appendChild(img);
+            };
+            
+            reader.readAsDataURL(file);
+        } else {
+            preview.innerHTML = '<span>ตัวอย่างรูปภาพ</span>';
+        }
+    });
+
+    // เพิ่มฮีโร่
+    document.getElementById('add-hero-btn').addEventListener('click', function() {
+        const heroName = document.getElementById('hero-name').value.trim();
+        const heroClass = document.getElementById('hero-class').value;
+        const heroImageInput = document.getElementById('hero-image');
+        
+        if (!heroName) {
+            alert('กรุณาใส่ชื่อฮีโร่');
+            return;
+        }
+        
+        if (!heroImageInput.files || heroImageInput.files.length === 0) {
+            alert('กรุณาเลือกรูปภาพ');
+            return;
+        }
+        
+        const file = heroImageInput.files[0];
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            const imageData = e.target.result; // Base64 encoded image
+            
+            // เพิ่มฮีโร่ลงใน localStorage
+            let heroes = {};
+            try {
+                heroes = JSON.parse(localStorage.getItem('rovHeroData')) || {};
+            } catch (error) {
+                console.error('Error parsing hero data:', error);
+                heroes = {};
+            }
+            
+            // ตรวจสอบว่ามีคลาสนี้หรือยัง
+            if (!heroes[heroClass]) {
+                heroes[heroClass] = [];
+            }
+            
+            // ตรวจสอบว่ามีฮีโร่นี้หรือยัง
+            if (!heroes[heroClass].includes(heroName)) {
+                heroes[heroClass].push(heroName);
+            }
+            
+            // บันทึกข้อมูลฮีโร่
+            localStorage.setItem('rovHeroData', JSON.stringify(heroes));
+            
+            // บันทึกรูปภาพฮีโร่
+            let heroImages = {};
+            try {
+                heroImages = JSON.parse(localStorage.getItem('rovHeroImages')) || {};
+            } catch (error) {
+                console.error('Error parsing hero images:', error);
+                heroImages = {};
+            }
+            
+            // เพิ่มรูปภาพ
+            heroImages[heroName] = imageData;
+            
+            // บันทึกรูปภาพ
+            localStorage.setItem('rovHeroImages', JSON.stringify(heroImages));
+            
+            // รีเซ็ตฟอร์ม
+            document.getElementById('hero-name').value = '';
+            document.getElementById('hero-image').value = '';
+            document.getElementById('image-preview').innerHTML = '<span>ตัวอย่างรูปภาพ</span>';
+            
+            // รีเฟรชตาราง
+            renderHeroesTable();
+            
+            alert(`เพิ่มฮีโร่ ${heroName} (${heroClass}) สำเร็จ`);
+        };
+        
+        reader.onerror = function() {
+            alert('เกิดข้อผิดพลาดในการอ่านไฟล์รูปภาพ');
+        };
+        
+        reader.readAsDataURL(file);
+    });
+
+    // ลบข้อมูลฮีโร่ทั้งหมด
+    document.getElementById('delete-all-heroes-btn').addEventListener('click', function() {
+        if (confirm('คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลฮีโร่ทั้งหมด? การกระทำนี้ไม่สามารถเรียกคืนได้')) {
+            try {
+                // ลบข้อมูลฮีโร่จาก localStorage
+                localStorage.removeItem('rovHeroData');
+                localStorage.removeItem('rovHeroImages');
+                
+                // ตั้งค่าข้อมูลฮีโร่เป็นออบเจ็กต์ว่าง
+                localStorage.setItem('rovHeroData', JSON.stringify({}));
+                localStorage.setItem('rovHeroImages', JSON.stringify({}));
+                
+                // รีเฟรชตาราง
+                renderHeroesTable();
+                
+                alert('ลบข้อมูลฮีโร่ทั้งหมดเรียบร้อย');
+            } catch (error) {
+                console.error('Error deleting all heroes:', error);
+                alert('เกิดข้อผิดพลาดในการลบข้อมูลฮีโร่');
+            }
+        }
+    });
+    </script>
+    
+    <!-- Main event listeners initialization -->
+    <script>
+    // รอให้ DOM โหลดเสร็จก่อนเพิ่ม event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("DOM loaded, adding event listeners...");
+        
+        // เพิ่ม event listener ให้กับปุ่มเมนูหลัก
+        document.getElementById('draft-btn').addEventListener('click', function() {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.getElementById('draft-page').classList.add('active');
+            
+            document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('draft-btn').classList.add('active');
+        });
+        
+        document.getElementById('history-btn').addEventListener('click', function() {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.getElementById('history-page').classList.add('active');
+            
+            document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('history-btn').classList.add('active');
+            
+            // ถ้ามีฟังก์ชันสำหรับแสดงข้อมูลแมตช์
+            if (typeof renderMatchesTable === 'function') {
+                renderMatchesTable();
+            }
+        });
+        
+        document.getElementById('heroes-btn').addEventListener('click', function() {
+            // เปลี่ยนหน้าไปที่หน้าจัดการข้อมูลฮีโร่
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.getElementById('heroes-page').classList.add('active');
+            
+            // อัปเดตปุ่มที่เป็น active
+            document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('heroes-btn').classList.add('active');
+            
+            // แสดงข้อมูลฮีโร่
+            renderHeroesTable();
+        });
+        
+        document.getElementById('settings-btn').addEventListener('click', function() {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.getElementById('settings-page').classList.add('active');
+            
+            document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('settings-btn').classList.add('active');
+        });
+        
+        // แสดงข้อมูลฮีโร่เมื่อโหลดเสร็จ หากอยู่ที่หน้าจัดการฮีโร่
+        if (document.getElementById('heroes-page').classList.contains('active')) {
+            renderHeroesTable();
+        }
+    });
+    </script>
 </body>
 </html>
