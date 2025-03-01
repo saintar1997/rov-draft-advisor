@@ -467,27 +467,21 @@
         <p>กำลังโหลดข้อมูล...</p>
     </div>
 
-    <!-- Update these lines at the bottom of your index.html file -->
-
     <!-- External libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-    <!-- Application scripts - THIS ORDER IS CRITICAL -->
-    <!-- Core data and functionality first -->
+    
+    <!-- Application scripts -->
     <script src="js/data.js"></script>
     <script src="js/analytics.js"></script>
     <script src="js/ui.js"></script>
-
-    <!-- Component scripts -->
+    <script src="js/app.js"></script>
+    <!-- Hero Selection System -->
     <script src="js/hero-manager.js"></script>
     <script src="js/hero-selection-controller.js"></script>
-    <script src="js/matches.js"></script>
-
-    <!-- Integration script -->
+    <script src="js/hero-editor.js"></script>
     <script src="js/integration.js"></script>
 
-    <!-- Main application entry point MUST BE LAST -->
-    <script src="js/app.js"></script>
+    <script src="js/matches.js"></script>
     
     <!-- Hero management script -->
     <script>

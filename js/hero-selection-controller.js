@@ -1,67 +1,40 @@
 /**
- * hero-selection-controller.js
- * Manages the hero selection modal and interaction
- * Refactored for better organization, error handling, and performance
+ * Hero Selection Controller
+ * Initializes and manages the hero selection process
  */
 
-const HeroSelectionController = (() => {
-  // Private state
-  let currentSelection = null;
-  let heroData = [];
-  
-  // Hero class color mapping for visual indicators
-  const CLASS_COLORS = {
-    'Assassin': '#ff5252',
-    'Fighter': '#ff9800',
-    'Mage': '#2196f3',
-    'Carry': '#9c27b0',
-    'Support': '#4caf50',
-    'Tank': '#607d8b'
-  };
-
-  /**
-   * Initialize the controller
-   */
-  function init() {
+// Hero Selection Controller
+const HeroSelectionController = {
+  // Initialize the selection controller
+  init: function () {
     console.log("Initializing Hero Selection Controller...");
 
-    try {
-      // Ensure modal exists and update structure if needed
-      updateModalStructure();
-      
-      // Set up event listeners
-      setupEventListeners();
-      
-      // Load custom CSS
-      injectCustomStyles();
-      
-      console.log("Hero Selection Controller initialized successfully");
-      return true;
-    } catch (error) {
-      console.error("Error initializing Hero Selection Controller:", error);
-      return false;
-    }
-  }
-
-  /**
-   * Create or update modal structure
-   */
-  function updateModalStructure() {
+    // Make sure the modal exists
     const modal = document.getElementById("heroSelectionModal");
-    
-    // Create modal if it doesn't exist
     if (!modal) {
-      console.log("Creating hero selection modal");
-      
-      const modalContainer = document.createElement("div");
-      modalContainer.id = "heroSelectionModal";
-      modalContainer.className = "hero-selection-modal";
-      
-      document.body.appendChild(modalContainer);
+      console.error("Hero selection modal not found");
+      return;
     }
-    
-    // Update modal content
-    const modalContent = `
+
+    // Update the modal with the enhanced version
+    this.updateModalStructure();
+
+    // Set up event listeners
+    this.setupEventListeners();
+
+    // Enhanced UI elements
+    this.enhanceUI();
+
+    console.log("Hero Selection Controller initialized");
+  },
+
+  // Update the modal structure with our enhanced version
+  updateModalStructure: function () {
+    const modal = document.getElementById("heroSelectionModal");
+    if (!modal) return;
+
+    // Replace the modal content with the updated version
+    modal.innerHTML = `
       <div class="modal-content">
         <div class="modal-header">
             <h3>เลือกฮีโร่</h3>
@@ -101,67 +74,59 @@ const HeroSelectionController = (() => {
         </div>
       </div>
     `;
-    
-    document.getElementById("heroSelectionModal").innerHTML = modalContent;
-  }
+  },
 
-  /**
-   * Set up event listeners for all interactive elements
-   */
-  function setupEventListeners() {
+  // Set up event listeners for the hero selection interface
+  setupEventListeners: function () {
     // Close button
     const closeBtn = document.querySelector(".hero-selection-modal .close-btn");
     if (closeBtn) {
-      closeBtn.addEventListener("click", closeModal);
+      closeBtn.addEventListener("click", this.closeModal.bind(this));
     }
 
     // Filter buttons
-    const filterButtons = document.querySelectorAll(".hero-selection-modal .filter-btn");
-    filterButtons.forEach(button => {
-      button.addEventListener("click", () => {
-        // Update active class
-        filterButtons.forEach(btn => btn.classList.remove("active"));
+    const filterButtons = document.querySelectorAll(
+      ".hero-selection-modal .filter-btn"
+    );
+    filterButtons.forEach((button) => {
+      button.addEventListener("click", (e) => {
+        // Remove active class from all buttons
+        filterButtons.forEach((btn) => btn.classList.remove("active"));
+
+        // Add active class to the clicked button
         button.classList.add("active");
-        
-        // Apply filter
+
+        // Apply the filter
         const filter = button.getAttribute("data-filter");
-        filterHeroesByClass(filter);
+        this.filterHeroesByClass(filter);
       });
     });
 
-    // Search input
+    // Hero search input
     const searchInput = document.getElementById("heroSearch");
     if (searchInput) {
-      searchInput.addEventListener("input", () => {
-        filterHeroesBySearch(searchInput.value);
+      searchInput.addEventListener("input", (e) => {
+        this.filterHeroesBySearch(e.target.value);
       });
     }
 
-    // Modal background click to close
+    // Click outside to close
     const modal = document.getElementById("heroSelectionModal");
     if (modal) {
-      modal.addEventListener("click", (event) => {
-        if (event.target === modal) {
-          closeModal();
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) {
+          this.closeModal();
         }
       });
     }
-  }
+  },
 
-  /**
-   * Inject custom CSS styles for the modal
-   */
-  function injectCustomStyles() {
-    // Check if styles already exist
-    if (document.getElementById("hero-selection-styles")) {
-      return;
-    }
-    
-    const styleElement = document.createElement("style");
-    styleElement.id = "hero-selection-styles";
-    
-    styleElement.textContent = `
-      /* Hero Selection Modal Styles */
+  // Enhance UI with additional visual elements
+  enhanceUI: function () {
+    // Add additional styles to the document head
+    const style = document.createElement("style");
+    style.textContent = `
+      /* Enhanced Hero Selection Modal Styles */
       .hero-selection-modal {
         display: none;
         position: fixed;
@@ -198,49 +163,6 @@ const HeroSelectionController = (() => {
         to { transform: translateY(0); }
       }
       
-      .modal-header {
-        padding: 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background-color: #131c2e;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      }
-      
-      .modal-header h3 {
-        margin: 0;
-        color: #1baeea;
-        font-size: 1.5rem;
-      }
-      
-      .close-btn {
-        background: none;
-        border: none;
-        color: rgba(255, 255, 255, 0.6);
-        font-size: 1.8rem;
-        cursor: pointer;
-        transition: all 0.3s;
-        width: 36px;
-        height: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-      }
-      
-      .close-btn:hover {
-        background-color: rgba(255, 255, 255, 0.1);
-        color: #fff;
-        transform: rotate(90deg);
-      }
-      
-      .modal-body {
-        padding: 20px;
-        max-height: 70vh;
-        overflow-y: auto;
-      }
-      
-      /* Selection info */
       .selection-info {
         background-color: rgba(0, 0, 0, 0.2);
         border-radius: 8px;
@@ -255,146 +177,6 @@ const HeroSelectionController = (() => {
         color: #fff;
       }
       
-      /* Search and filter */
-      .search-filter {
-        margin-bottom: 25px;
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        background-color: #1f2a40;
-        padding: 10px 0;
-        border-radius: 8px;
-      }
-      
-      .search-wrapper {
-        position: relative;
-        margin-bottom: 15px;
-      }
-      
-      .search-wrapper::before {
-        content: '\\f002'; /* Search icon from FontAwesome */
-        font-family: 'Font Awesome 5 Free';
-        font-weight: 900;
-        position: absolute;
-        left: 15px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: rgba(255, 255, 255, 0.4);
-      }
-      
-      #heroSearch {
-        width: 100%;
-        padding: 12px 15px 12px 45px;
-        border-radius: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        background-color: rgba(0, 0, 0, 0.2);
-        color: #fff;
-        font-family: 'Kanit', sans-serif;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-      }
-      
-      #heroSearch:focus {
-        border-color: #1baeea;
-        outline: none;
-        box-shadow: 0 0 0 3px rgba(27, 174, 234, 0.2);
-      }
-      
-      /* Filter buttons */
-      .filter-buttons {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        padding: 5px 0;
-      }
-      
-      .filter-btn {
-        padding: 8px 12px;
-        border: none;
-        border-radius: 6px;
-        background-color: rgba(255, 255, 255, 0.1);
-        color: #fff;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-family: 'Kanit', sans-serif;
-      }
-      
-      .filter-btn:hover {
-        background-color: rgba(255, 255, 255, 0.2);
-      }
-      
-      .filter-btn.active {
-        background-color: #2e3192;
-      }
-      
-      /* Hero grid */
-      .heroes-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-        gap: 15px;
-        padding-bottom: 20px;
-      }
-      
-      .hero-card {
-        background-color: rgba(0, 0, 0, 0.2);
-        border-radius: 8px;
-        padding: 10px;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-        animation: fadeIn 0.3s ease;
-      }
-      
-      @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-      
-      .hero-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        background-color: rgba(0, 0, 0, 0.3);
-      }
-      
-      .hero-card img {
-        width: 80px;
-        height: 80px;
-        border-radius: 8px;
-        object-fit: cover;
-        margin-bottom: 8px;
-        border: 2px solid rgba(255, 255, 255, 0.1);
-        transition: all 0.3s ease;
-      }
-      
-      .hero-card:hover img {
-        border-color: rgba(255, 255, 255, 0.3);
-        transform: scale(1.05);
-      }
-      
-      .hero-name {
-        font-size: 0.9rem;
-        color: #fff;
-        margin-top: 5px;
-        font-weight: 500;
-      }
-      
-      .class-indicators {
-        display: flex;
-        justify-content: center;
-        gap: 3px;
-        margin-top: 8px;
-      }
-      
-      .class-indicator {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        display: inline-block;
-      }
-      
-      /* Empty state */
       .empty-state {
         text-align: center;
         padding: 40px 0;
@@ -409,462 +191,527 @@ const HeroSelectionController = (() => {
         display: block;
       }
       
-      /* Class-specific styling */
-      .filter-btn[data-filter="Assassin"] {
-        border-left: 4px solid ${CLASS_COLORS.Assassin};
-      }
-      
-      .filter-btn[data-filter="Fighter"] {
-        border-left: 4px solid ${CLASS_COLORS.Fighter};
-      }
-      
-      .filter-btn[data-filter="Mage"] {
-        border-left: 4px solid ${CLASS_COLORS.Mage};
-      }
-      
-      .filter-btn[data-filter="Carry"] {
-        border-left: 4px solid ${CLASS_COLORS.Carry};
-      }
-      
-      .filter-btn[data-filter="Support"] {
-        border-left: 4px solid ${CLASS_COLORS.Support};
-      }
-      
-      .filter-btn[data-filter="Tank"] {
-        border-left: 4px solid ${CLASS_COLORS.Tank};
-      }
-      
-      /* Responsive styles */
-      @media (max-width: 768px) {
-        .modal-content {
-          width: 95%;
-          margin: 20px auto;
-        }
-        
-        .heroes-grid {
-          grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-          gap: 10px;
-        }
-        
-        .hero-card img {
-          width: 70px;
-          height: 70px;
-        }
-        
-        .filter-buttons {
-          gap: 5px;
-        }
-        
-        .filter-btn {
-          padding: 6px 10px;
-          font-size: 0.8rem;
-        }
-      }
+      /* Class indicator colors */
+      .class-indicator-assassin { background-color: #ff5252; }
+      .class-indicator-fighter { background-color: #ff9800; }
+      .class-indicator-mage { background-color: #2196f3; }
+      .class-indicator-carry { background-color: #9c27b0; }
+      .class-indicator-support { background-color: #4caf50; }
+      .class-indicator-tank { background-color: #607d8b; }
     `;
-    
-    document.head.appendChild(styleElement);
-  }
 
-  /**
-   * Open the hero selection modal
-   * @param {number} team - Team ID (1 or 2)
-   * @param {string} type - Selection type ('ban' or 'pick')
-   * @param {number} slotIndex - Slot index
-   */
-  function openModal(team, type, slotIndex) {
-    console.log("Opening hero selection modal:", { team, type, slotIndex });
-    
-    // Update selection info
-    updateSelectionInfo(team, type, slotIndex);
-    
-    // Populate heroes grid
-    populateHeroesGrid();
-    
+    document.head.appendChild(style);
+  },
+
+  // Open the hero selection modal
+  openModal: function (team, type, slotIndex) {
+    console.log("Opening Modal - Detailed:", {
+      team: team,
+      type: type,
+      slot: slotIndex,
+    });
+
+    // Update the selection info (add more detailed logging)
+    this.updateSelectionInfo(team, type, slotIndex);
+
+    // Populate the heroes grid
+    this.populateHeroesGrid();
+
     // Show the modal
     const modal = document.getElementById("heroSelectionModal");
     if (modal) {
       modal.style.display = "block";
-      
-      // Focus on search input
+
+      // Focus on the search input
       setTimeout(() => {
         const searchInput = document.getElementById("heroSearch");
         if (searchInput) {
           searchInput.focus();
+          // Clear any previous search
           searchInput.value = "";
         }
-        
+
         // Reset filter to "all"
-        const filterButtons = document.querySelectorAll(".hero-selection-modal .filter-btn");
-        filterButtons.forEach(btn => {
-          btn.classList.toggle("active", btn.getAttribute("data-filter") === "all");
+        const filterButtons = document.querySelectorAll(
+          ".hero-selection-modal .filter-btn"
+        );
+        filterButtons.forEach((btn) => {
+          btn.classList.toggle(
+            "active",
+            btn.getAttribute("data-filter") === "all"
+          );
         });
-        
-        // Reset hero display
-        filterHeroesByClass("all");
+
+        // Reset the grid to show all heroes
+        this.filterHeroesByClass("all");
       }, 100);
     }
-  }
+  },
 
-  /**
-   * Close the hero selection modal
-   */
-  function closeModal() {
-    const modal = document.getElementById("heroSelectionModal");
-    if (modal) {
-      modal.style.display = "none";
-    }
-  }
+  updateSelectionInfo: function (team, type, slotIndex) {
+    console.log("Updating selection info:", {
+      team,
+      type,
+      slotIndex,
+    });
 
-  /**
-   * Update selection info displayed in the modal
-   * @param {number} team - Team ID (1 or 2)
-   * @param {string} type - Selection type ('ban' or 'pick')
-   * @param {number} slotIndex - Slot index
-   */
-  function updateSelectionInfo(team, type, slotIndex) {
-    // Update UI elements
     const selectionTeam = document.getElementById("selectionTeam");
     const selectionType = document.getElementById("selectionType");
     const selectionSlot = document.getElementById("selectionSlot");
-    
+
     if (selectionTeam) selectionTeam.textContent = `ทีม ${team}`;
-    if (selectionType) selectionType.textContent = type === "ban" ? "แบน" : "เลือก";
+    if (selectionType)
+      selectionType.textContent = type === "ban" ? "แบน" : "เลือก";
     if (selectionSlot) selectionSlot.textContent = slotIndex + 1; // Display 1-based index
-    
-    // Save current selection
-    currentSelection = {
+
+    // Detailed debug logging
+    console.log("Modal Elements:", {
+      teamElement: selectionTeam ? selectionTeam.textContent : "Not Found",
+      typeElement: selectionType ? selectionType.textContent : "Not Found",
+      slotElement: selectionSlot ? selectionSlot.textContent : "Not Found",
+    });
+
+    // Save the current selection state
+    this.currentSelection = {
       team,
       type,
-      slot: slotIndex
+      slot: slotIndex,
     };
-    
-    console.log("Current selection updated:", currentSelection);
-  }
 
-  /**
-   * Populate the heroes grid with available heroes
-   */
-  function populateHeroesGrid() {
-    try {
-      const heroesGrid = document.querySelector(".heroes-grid");
-      if (!heroesGrid) {
-        console.error("Heroes grid element not found");
-        return;
-      }
-      
-      // Clear the grid
-      heroesGrid.innerHTML = "";
-      
-      // Get heroes from data sources
-      loadHeroes();
-      
-      // Get current draft state
-      const currentDraft = getCurrentDraft();
-      
-      // Filter out heroes that are already picked or banned
-      const availableHeroes = heroData.filter(hero => {
-        return !isHeroPicked(hero.name, currentDraft) && !isHeroBanned(hero.name, currentDraft);
-      });
-      
-      console.log(`Found ${availableHeroes.length} available heroes`);
-      
-      // Add heroes to the grid
-      availableHeroes.forEach(hero => {
-        const heroCard = document.createElement("div");
-        heroCard.className = "hero-card";
-        heroCard.dataset.name = hero.name;
-        heroCard.dataset.classes = hero.classes.join(",");
-        
-        // Create hero image
-        const heroImage = document.createElement("img");
-        heroImage.src = hero.image;
-        heroImage.alt = hero.name;
-        heroImage.loading = "lazy"; // Lazy load images for better performance
-        
-        // Create class indicators
-        const classIndicators = document.createElement("div");
-        classIndicators.className = "class-indicators";
-        
-        hero.classes.forEach(cls => {
-          const indicator = document.createElement("span");
-          indicator.className = "class-indicator";
-          indicator.style.backgroundColor = CLASS_COLORS[cls] || "#888";
-          indicator.title = cls;
-          classIndicators.appendChild(indicator);
-        });
-        
-        // Create hero name
-        const heroName = document.createElement("div");
-        heroName.className = "hero-name";
-        heroName.textContent = hero.name;
-        
-        // Assemble hero card
-        heroCard.appendChild(heroImage);
-        heroCard.appendChild(classIndicators);
-        heroCard.appendChild(heroName);
-        
-        // Add click event
-        heroCard.addEventListener("click", () => {
-          selectHero(hero.name);
-        });
-        
-        // Add to grid
-        heroesGrid.appendChild(heroCard);
-      });
-      
-      // Show/hide empty state
-      updateEmptyState(availableHeroes.length === 0);
-    } catch (error) {
-      console.error("Error populating hero grid:", error);
-    }
-  }
+    console.log("Current selection saved:", this.currentSelection);
+  },
 
-  /**
-   * Load heroes from available data sources
-   */
-  function loadHeroes() {
-    // Try DataManager first
-    if (typeof DataManager !== 'undefined' && typeof DataManager.getHeroesByRole === 'function') {
-      heroData = DataManager.getHeroesByRole();
-      return;
-    }
-    
-    // Try HeroManager if DataManager not available
-    if (typeof HeroManager !== 'undefined' && Array.isArray(HeroManager.allHeroes)) {
-      heroData = HeroManager.allHeroes;
-      return;
-    }
-    
-    // Use default heroes if no data source is available
-    console.warn("No hero data source found, using defaults");
-    
-    // Get default heroes from localStorage or fallback to minimal set
-    try {
-      const savedHeroes = localStorage.getItem('rovHeroData');
-      if (savedHeroes) {
-        const heroClasses = JSON.parse(savedHeroes);
-        
-        heroData = [];
-        const processedNames = new Set();
-        
-        Object.entries(heroClasses).forEach(([className, heroList]) => {
-          heroList.forEach(heroName => {
-            if (!processedNames.has(heroName)) {
-              processedNames.add(heroName);
-              
-              // Find all classes for this hero
-              const classes = [];
-              Object.entries(heroClasses).forEach(([cls, list]) => {
-                if (list.includes(heroName)) {
-                  classes.push(cls);
-                }
-              });
-              
-              heroData.push({
-                name: heroName,
-                image: `https://via.placeholder.com/80?text=${encodeURIComponent(heroName)}`,
-                classes: classes
-              });
-            }
-          });
-        });
-      } else {
-        // Minimal fallback
-        heroData = [
-          { name: "Airi", image: "https://via.placeholder.com/80?text=Airi", classes: ["Assassin"] },
-          { name: "Tulen", image: "https://via.placeholder.com/80?text=Tulen", classes: ["Mage"] },
-          { name: "Thane", image: "https://via.placeholder.com/80?text=Thane", classes: ["Tank"] },
-        ];
-      }
-    } catch (error) {
-      console.error("Error loading heroes from localStorage:", error);
-      
-      // Minimal fallback
-      heroData = [
-        { name: "Airi", image: "https://via.placeholder.com/80?text=Airi", classes: ["Assassin"] },
-        { name: "Tulen", image: "https://via.placeholder.com/80?text=Tulen", classes: ["Mage"] },
-        { name: "Thane", image: "https://via.placeholder.com/80?text=Thane", classes: ["Tank"] },
-      ];
-    }
-  }
-
-  /**
-   * Get current draft state from AnalyticsManager
-   * @returns {Object} Current draft state
-   */
-  function getCurrentDraft() {
-    // Try to get draft from AnalyticsManager
-    if (typeof AnalyticsManager !== 'undefined' && typeof AnalyticsManager.getCurrentDraft === 'function') {
-      return AnalyticsManager.getCurrentDraft();
-    }
-    
-    // Return empty draft if AnalyticsManager not available
-    return {
-      team1: { bans: [], picks: [] },
-      team2: { bans: [], picks: [] }
-    };
-  }
-
-  /**
-   * Check if a hero is already picked
-   * @param {string} heroName - Hero name
-   * @param {Object} draft - Current draft state
-   * @returns {boolean} True if hero is picked
-   */
-  function isHeroPicked(heroName, draft) {
-    return draft.team1.picks.includes(heroName) || draft.team2.picks.includes(heroName);
-  }
-
-  /**
-   * Check if a hero is already banned
-   * @param {string} heroName - Hero name
-   * @param {Object} draft - Current draft state
-   * @returns {boolean} True if hero is banned
-   */
-  function isHeroBanned(heroName, draft) {
-    return draft.team1.bans.includes(heroName) || draft.team2.bans.includes(heroName);
-  }
-
-  /**
-   * Update empty state message visibility
-   * @param {boolean} isEmpty - Whether there are no heroes to display
-   */
-  function updateEmptyState(isEmpty) {
-    const emptyState = document.getElementById("emptyState");
-    if (emptyState) {
-      emptyState.style.display = isEmpty ? "block" : "none";
-    }
-  }
-
-  /**
-   * Filter heroes by class
-   * @param {string} classFilter - Class to filter by or 'all'
-   */
-  function filterHeroesByClass(classFilter) {
-    const heroCards = document.querySelectorAll(".hero-selection-modal .hero-card");
-    const searchInput = document.getElementById("heroSearch");
-    const searchTerm = searchInput ? searchInput.value.toLowerCase() : "";
-    
-    let visibleCount = 0;
-    
-    heroCards.forEach(card => {
-      const heroName = card.dataset.name.toLowerCase();
-      const heroClasses = card.dataset.classes.split(",");
-      
-      const matchesClass = classFilter === "all" || heroClasses.includes(classFilter);
-      const matchesSearch = !searchTerm || heroName.includes(searchTerm);
-      
-      // Update visibility
-      card.style.display = (matchesClass && matchesSearch) ? "block" : "none";
-      
-      if (matchesClass && matchesSearch) {
-        visibleCount++;
-      }
+  selectHero: function (heroName) {
+    console.log("Select Hero Called:", {
+      heroName,
+      currentSelection: this.currentSelection,
     });
-    
-    // Update empty state
-    updateEmptyState(visibleCount === 0);
-  }
 
-  /**
-   * Filter heroes by search term
-   * @param {string} searchTerm - Search term
-   */
-  function filterHeroesBySearch(searchTerm) {
-    const filterButtons = document.querySelectorAll(".hero-selection-modal .filter-btn");
-    const activeButton = Array.from(filterButtons).find(btn => btn.classList.contains("active"));
-    const activeFilter = activeButton ? activeButton.getAttribute("data-filter") : "all";
-    
-    filterHeroesByClass(activeFilter);
-  }
-
-  /**
-   * Select a hero from the modal
-   * @param {string} heroName - Hero name
-   * @returns {boolean} Success status
-   */
-  function selectHero(heroName) {
-    console.log("Hero selected:", heroName);
-    
-    // Validate current selection
-    if (!currentSelection) {
+    if (!this.currentSelection) {
       console.error("No active selection");
       return false;
     }
-    
-    // Try to add hero to draft
+
+    // Destructure the current selection
+    const { team, type, slot } = this.currentSelection;
+
+    console.log("Hero Selection Details:", {
+      team,
+      type,
+      slot,
+      heroName,
+    });
+
     let success = false;
-    
+
     try {
-      if (currentSelection.type === "ban") {
-        if (typeof AnalyticsManager !== 'undefined' && typeof AnalyticsManager.addBan === 'function') {
-          success = AnalyticsManager.addBan(
-            currentSelection.team,
-            heroName,
-            currentSelection.slot
-          );
-        }
+      if (type === "ban") {
+        success = AnalyticsManager.addBan(team, heroName, slot);
       } else {
-        if (typeof AnalyticsManager !== 'undefined' && typeof AnalyticsManager.addPick === 'function') {
-          success = AnalyticsManager.addPick(
-            currentSelection.team,
-            heroName,
-            currentSelection.slot
-          );
-        }
+        success = AnalyticsManager.addPick(team, heroName, slot);
       }
-      
+
       if (success) {
-        // Close modal
-        closeModal();
-        
-        // Update UI
-        if (typeof UIManager !== 'undefined' && typeof UIManager.render === 'function') {
+        console.log("Hero successfully added");
+        this.closeModal();
+
+        if (
+          typeof UIManager !== "undefined" &&
+          typeof UIManager.render === "function"
+        ) {
           UIManager.render();
         }
-        
-        return true;
       } else {
         console.warn("Failed to add hero");
         alert("ไม่สามารถเลือกฮีโร่นี้ได้ อาจเพราะถูกเลือกหรือแบนไปแล้ว");
-        return false;
       }
+
+      return success;
     } catch (error) {
       console.error("Error selecting hero:", error);
       alert("เกิดข้อผิดพลาดในการเลือกฮีโร่");
       return false;
     }
-  }
+  },
 
-  /**
-   * Get current selection state
-   * @returns {Object} Current selection state
-   */
-  function getSelectionState() {
-    return currentSelection;
-  }
-
-  // Public API
-  return {
-    init,
-    openModal,
-    closeModal,
-    getSelectionState,
-    selectHero,
-    currentSelection,
-    filterHeroesByClass,
-    filterHeroesBySearch
-  };
-})();
-
-// Initialize when the page loads if not loaded by app.js
-if (document.readyState === "complete") {
-  HeroSelectionController.init();
-} else {
-  document.addEventListener("DOMContentLoaded", function() {
-    // Only initialize if not already initialized by app.js
-    if (typeof RoVDraftHelper === 'undefined' || !RoVDraftHelper.initialized) {
-      HeroSelectionController.init();
+  // Close the hero selection modal
+  closeModal: function () {
+    const modal = document.getElementById("heroSelectionModal");
+    if (modal) {
+      modal.style.display = "none";
     }
-  });
+  },
+
+  // Populate the heroes grid with available heroes
+  populateHeroesGrid: function () {
+    try {
+      console.log("Starting hero grid population...");
+
+      // Get the hero grid element
+      const heroesGrid = document.querySelector(".heroes-grid");
+      if (!heroesGrid) {
+        console.error("Hero grid element not found");
+        return;
+      }
+
+      // Clear the grid
+      heroesGrid.innerHTML = "";
+
+      // Helper function to get current draft
+      const getCurrentDraft = () => {
+        if (
+          typeof AnalyticsManager !== "undefined" &&
+          typeof AnalyticsManager.getCurrentDraft === "function"
+        ) {
+          return AnalyticsManager.getCurrentDraft();
+        }
+
+        // Default empty draft state
+        return {
+          team1: {
+            bans: [],
+            picks: [],
+          },
+          team2: {
+            bans: [],
+            picks: [],
+          },
+        };
+      };
+
+      // Get heroes - first try DataManager
+      let heroes = [];
+      if (
+        typeof DataManager !== "undefined" &&
+        typeof DataManager.getHeroesByRole === "function"
+      ) {
+        console.log("Getting heroes from DataManager");
+        heroes = DataManager.getHeroesByRole("all"); // Ensure getting ALL heroes
+      }
+      // Fallback to HeroManager if available
+      else if (typeof HeroManager !== "undefined" && HeroManager.allHeroes) {
+        console.log("Getting heroes from HeroManager");
+        heroes = HeroManager.allHeroes;
+      }
+      // Fallback to default heroes if needed
+      else {
+        console.warn("No hero source available, using defaults");
+        heroes = [
+          { name: "Airi", image: "default-image-url", classes: ["Assassin"] },
+          {
+            name: "Butterfly",
+            image: "default-image-url",
+            classes: ["Assassin"],
+          },
+          // Add more default heroes
+        ];
+      }
+
+      console.log(`Retrieved ${heroes.length} heroes`);
+
+      // Get current draft state to filter heroes
+      const currentDraft = getCurrentDraft();
+
+      // Filter out heroes that are already picked or banned
+      const availableHeroes = heroes.filter((hero) => {
+        const heroName = hero.name;
+
+        // Check if already picked
+        const isAlreadyPicked =
+          currentDraft.team1.picks.includes(heroName) ||
+          currentDraft.team2.picks.includes(heroName);
+
+        // Check if banned
+        const isHeroBanned =
+          currentDraft.team1.bans.includes(heroName) ||
+          currentDraft.team2.bans.includes(heroName);
+
+        return !isAlreadyPicked && !isHeroBanned;
+      });
+
+      console.log(
+        `After filtering, ${availableHeroes.length} heroes are available`
+      );
+
+      // Add heroes to the grid
+      availableHeroes.forEach((hero) => {
+        const heroCard = document.createElement("div");
+        heroCard.className = "hero-card";
+        heroCard.dataset.hero = hero.name;
+
+        const heroImage = document.createElement("img");
+        heroImage.src =
+          hero.image ||
+          `https://via.placeholder.com/80?text=${encodeURIComponent(
+            hero.name
+          )}`;
+        heroImage.alt = hero.name;
+
+        const heroName = document.createElement("div");
+        heroName.className = "hero-name";
+        heroName.textContent = hero.name;
+
+        // Add class indicators
+        const classIndicators = document.createElement("div");
+        classIndicators.className = "class-indicators";
+
+        hero.classes.forEach((heroClass) => {
+          const indicator = document.createElement("span");
+          indicator.className = `class-indicator class-indicator-${heroClass.toLowerCase()}`;
+          indicator.title = heroClass;
+          classIndicators.appendChild(indicator);
+        });
+
+        heroCard.appendChild(heroImage);
+        heroCard.appendChild(classIndicators);
+        heroCard.appendChild(heroName);
+
+        // Add click handler
+        heroCard.addEventListener("click", () => {
+          console.log(`Hero selected: ${hero.name}`);
+          this.selectHero(hero.name);
+        });
+
+        heroesGrid.appendChild(heroCard);
+      });
+
+      // Show/hide empty state
+      const emptyState = document.getElementById("emptyState");
+      if (emptyState) {
+        emptyState.style.display =
+          availableHeroes.length === 0 ? "block" : "none";
+      }
+
+      // Trigger search/filter
+      this.filterHeroesByClass("all");
+    } catch (error) {
+      console.error("Error populating hero grid:", error);
+    }
+  },
+
+  // Filter heroes by class
+  filterHeroesByClass: function (classFilter) {
+    try {
+      console.log("Filtering heroes by class:", classFilter);
+
+      // Find all hero cards and filter buttons
+      const heroCards = document.querySelectorAll(
+        ".hero-selection-modal .hero-card"
+      );
+      const filterButtons = document.querySelectorAll(
+        ".hero-selection-modal .filter-btn"
+      );
+
+      console.log("Hero Cards:", heroCards.length);
+      console.log("Filter Buttons:", filterButtons.length);
+
+      // Validate inputs
+      if (!heroCards.length || !filterButtons.length) {
+        console.warn("No hero cards or filter buttons found");
+        return;
+      }
+
+      // Find the active filter button if not specified
+      if (!classFilter) {
+        const activeButton = Array.from(filterButtons).find(
+          (btn) => btn && btn.classList.contains("active")
+        );
+        classFilter = activeButton
+          ? activeButton.getAttribute("data-filter") || "all"
+          : "all";
+      }
+
+      console.log("Active Class Filter:", classFilter);
+
+      // Get search input
+      const searchInput = document.getElementById("heroSearch");
+      const searchFilter = searchInput ? searchInput.value.toLowerCase() : "";
+
+      let visibleCount = 0;
+
+      heroCards.forEach((card) => {
+        // Safely get hero name and classes
+        const heroNameElement = card.querySelector(".hero-name");
+        const classIndicators = card.querySelectorAll(".class-indicator");
+
+        if (!heroNameElement) {
+          console.warn("Hero name element not found for card:", card);
+          card.style.display = "none";
+          return;
+        }
+
+        const heroName = heroNameElement.textContent.toLowerCase();
+
+        // Extract hero classes safely
+        const heroClasses = Array.from(classIndicators)
+          .map((indicator) =>
+            indicator.className
+              .replace("class-indicator", "")
+              .replace("class-indicator-", "")
+              .trim()
+          )
+          .filter((cls) => cls);
+
+        console.log("Hero Classes:", heroClasses);
+
+        // Check class and search filters
+        const matchesClass =
+          classFilter === "all" ||
+          heroClasses.some(
+            (cls) => cls.toLowerCase() === classFilter.toLowerCase()
+          );
+        const matchesSearch = !searchFilter || heroName.includes(searchFilter);
+
+        // Apply visibility
+        const shouldDisplay = matchesClass && matchesSearch;
+        card.style.display = shouldDisplay ? "block" : "none";
+
+        if (shouldDisplay) {
+          visibleCount++;
+        }
+      });
+
+      // Handle empty state
+      const emptyState = document.getElementById("emptyState");
+      if (emptyState) {
+        emptyState.style.display = visibleCount === 0 ? "block" : "none";
+      }
+    } catch (error) {
+      console.error("Error filtering heroes:", error);
+    }
+  },
+};
+
+// Helper function to get current draft state
+function getCurrentDraft() {
+  if (
+    typeof AnalyticsManager !== "undefined" &&
+    typeof AnalyticsManager.getCurrentDraft === "function"
+  ) {
+    return AnalyticsManager.getCurrentDraft();
+  }
+
+  // Default empty draft state
+  return {
+    team1: {
+      bans: [],
+      picks: [],
+    },
+    team2: {
+      bans: [],
+      picks: [],
+    },
+  };
 }
+
+// Helper function to get default heroes if needed
+function getDefaultHeroes() {
+  const DEFAULT_HEROES = {
+    Assassin: [
+      "Airi",
+      "Butterfly",
+      "Keera",
+      "Murad",
+      "Nakroth",
+      "Quillen",
+      "Wukong",
+      "Zuka",
+    ],
+    Fighter: [
+      "Allain",
+      "Arthur",
+      "Astrid",
+      "Florentino",
+      "Lu Bu",
+      "Omen",
+      "Qi",
+      "Riktor",
+      "Valhein",
+      "Yena",
+    ],
+    Mage: [
+      "Azzen'Ka",
+      "Dirak",
+      "Ignis",
+      "Ilumia",
+      "Kahlii",
+      "Krixi",
+      "Lauriel",
+      "Liliana",
+      "Natalya",
+      "Tulen",
+      "Zata",
+    ],
+    Carry: [
+      "Capheny",
+      "Elsu",
+      "Laville",
+      "Lindis",
+      "Slimz",
+      "Tel'Annas",
+      "Thorne",
+      "Violet",
+      "Wisp",
+      "Yorn",
+    ],
+    Support: [
+      "Alice",
+      "Annette",
+      "Chaugnar",
+      "Enzo",
+      "Ishar",
+      "Krizzix",
+      "Lumburr",
+      "Rouie",
+      "Zip",
+    ],
+    Tank: [
+      "Arum",
+      "Baldum",
+      "Grakk",
+      "Moren",
+      "Omega",
+      "Ormarr",
+      "Roxie",
+      "Skud",
+      "Thane",
+      "Y'bneth",
+    ],
+  };
+
+  const heroes = [];
+
+  // Process heroes from class-based object to flat array
+  Object.entries(DEFAULT_HEROES).forEach(([className, heroList]) => {
+    heroList.forEach((heroName) => {
+      // Check if hero already exists
+      const existingHero = heroes.find((h) => h.name === heroName);
+
+      if (existingHero) {
+        existingHero.roles.push(className);
+      } else {
+        heroes.push({
+          name: heroName,
+          roles: [className],
+          image: `https://via.placeholder.com/80?text=${encodeURIComponent(
+            heroName
+          )}`,
+        });
+      }
+    });
+  });
+
+  return heroes;
+}
+
+// Initialize HeroSelectionController when the page loads
+document.addEventListener("DOMContentLoaded", function () {
+  HeroSelectionController.init();
+
+  // Override UIManager's openHeroSelection method to use our enhanced version
+  if (typeof UIManager !== "undefined") {
+    UIManager.openHeroSelection = function (type, teamId, slotIndex) {
+      HeroSelectionController.openModal(teamId, type, slotIndex);
+    };
+  }
+});

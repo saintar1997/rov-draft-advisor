@@ -1,91 +1,74 @@
 /**
- * hero-manager.js - Hero data management system
- * Refactored for better organization, error handling, and performance
+ * Hero Management System
+ * This script handles hero data retrieval, class filtering, and hero selection
  */
 
-const HeroManager = (() => {
-  // State variables
-  let allHeroes = [];
-  let heroImages = {};
-  
-  // Hero class color mapping (for UI consistency)
-  const HERO_CLASS_COLORS = {
-    'Assassin': '#ff5252', // Red
-    'Fighter': '#ff9800',  // Orange
-    'Mage': '#2196f3',     // Blue
-    'Carry': '#9c27b0',    // Purple
-    'Support': '#4caf50',  // Green
-    'Tank': '#607d8b'      // Gray
-  };
-  
-  // Sample hero data (in case none exists in localStorage)
-  const DEFAULT_HEROES = {
-    "Assassin": ["Airi", "Butterfly", "Keera", "Murad", "Nakroth", "Quillen", "Wukong", "Zuka"],
-    "Fighter": ["Allain", "Arthur", "Astrid", "Florentino", "Lu Bu", "Omen", "Qi", "Riktor", "Valhein", "Yena"],
-    "Mage": ["Azzen'Ka", "Dirak", "Ignis", "Ilumia", "Kahlii", "Krixi", "Lauriel", "Liliana", "Natalya", "Tulen", "Zata"],
-    "Carry": ["Capheny", "Elsu", "Laville", "Lindis", "Slimz", "Tel'Annas", "Thorne", "Violet", "Wisp", "Yorn"],
-    "Support": ["Alice", "Annette", "Chaugnar", "Enzo", "Ishar", "Krizzix", "Lumburr", "Rouie", "Zip"],
-    "Tank": ["Arum", "Baldum", "Grakk", "Moren", "Omega", "Ormarr", "Roxie", "Skud", "Thane", "Y'bneth"]
-  };
+// Hero Class Color Mapping for visual indicators
+const HERO_CLASS_COLORS = {
+  'Assassin': '#ff5252', // Red
+  'Fighter': '#ff9800',  // Orange
+  'Mage': '#2196f3',     // Blue
+  'Carry': '#9c27b0',    // Purple
+  'Support': '#4caf50',  // Green
+  'Tank': '#607d8b'      // Gray
+};
 
-  /**
-   * Initialize Hero Manager
-   * @returns {boolean} Whether initialization was successful
-   */
-  function init() {
+// Sample hero data with images (in case none exists in localStorage)
+const DEFAULT_HEROES = {
+  "Assassin": ["Airi", "Butterfly", "Keera", "Murad", "Nakroth", "Quillen", "Wukong", "Zuka"],
+  "Fighter": ["Allain", "Arthur", "Astrid", "Florentino", "Lu Bu", "Omen", "Qi", "Riktor", "Valhein", "Yena"],
+  "Mage": ["Azzen'Ka", "Dirak", "Ignis", "Ilumia", "Kahlii", "Krixi", "Lauriel", "Liliana", "Natalya", "Tulen", "Zata"],
+  "Carry": ["Capheny", "Elsu", "Laville", "Lindis", "Slimz", "Tel'Annas", "Thorne", "Violet", "Wisp", "Yorn"],
+  "Support": ["Alice", "Annette", "Chaugnar", "Enzo", "Ishar", "Krizzix", "Lumburr", "Rouie", "Zip"],
+  "Tank": ["Arum", "Baldum", "Grakk", "Moren", "Omega", "Ormarr", "Roxie", "Skud", "Thane", "Y'bneth"]
+};
+
+// Hero Management Object
+const HeroManager = {
+  // All heroes from all classes
+  allHeroes: [],
+  
+  // Hero images map (name -> image URL)
+  heroImages: {},
+  
+  // Initialize hero data
+  init: function() {
     console.log('Initializing Hero Manager...');
     
-    try {
-      // Load hero data
-      loadHeroData();
-      
-      // Setup event handlers
-      setupEventListeners();
-      
-      // Apply UI enhancements
-      enhanceHeroGrid();
-      
-      console.log('Hero Manager initialized with', allHeroes.length, 'heroes');
-      return true;
-    } catch (error) {
-      console.error('Error initializing Hero Manager:', error);
-      return false;
-    }
-  }
-  
-  /**
-   * Load hero data from localStorage or default data
-   */
-  function loadHeroData() {
-    // Load hero class data
+    // Load hero data from localStorage
+    let heroes = {};
     try {
       const savedHeroes = localStorage.getItem('rovHeroData');
-      const heroClasses = savedHeroes ? JSON.parse(savedHeroes) : DEFAULT_HEROES;
-      
-      // Convert class-based object to flat array
-      processHeroes(heroClasses);
+      heroes = savedHeroes ? JSON.parse(savedHeroes) : DEFAULT_HEROES;
     } catch (error) {
       console.error('Error loading hero data:', error);
-      // Fallback to default data
-      processHeroes(DEFAULT_HEROES);
+      heroes = DEFAULT_HEROES;
     }
     
     // Load hero images
     try {
       const savedImages = localStorage.getItem('rovHeroImages');
-      heroImages = savedImages ? JSON.parse(savedImages) : {};
+      this.heroImages = savedImages ? JSON.parse(savedImages) : {};
     } catch (error) {
       console.error('Error loading hero images:', error);
-      heroImages = {};
+      this.heroImages = {};
     }
-  }
+    
+    // Process heroes into a flat list with class information
+    this.processHeroes(heroes);
+    
+    // Initialize the hero selection grid
+    this.initHeroGrid();
+    
+    // Set up event listeners
+    this.setupEventListeners();
+    
+    console.log('Hero Manager initialized with', this.allHeroes.length, 'heroes');
+  },
   
-  /**
-   * Process heroes from class-based object to flat array
-   * @param {Object} heroClasses - Hero classes object
-   */
-  function processHeroes(heroClasses) {
-    allHeroes = [];
+  // Process heroes from class-based object to flat array
+  processHeroes: function(heroClasses) {
+    this.allHeroes = [];
     const processedNames = new Set(); // To avoid duplicates
     
     // Loop through each class and its heroes
@@ -103,468 +86,153 @@ const HeroManager = (() => {
           });
           
           // Add hero to the flat list
-          allHeroes.push({
+          this.allHeroes.push({
             name: heroName,
             classes: heroClasses,
             primaryClass: heroClasses[0],
-            image: getHeroImage(heroName)
+            image: this.getHeroImage(heroName)
           });
         }
       });
     });
     
     // Sort heroes alphabetically
-    allHeroes.sort((a, b) => a.name.localeCompare(b.name));
-  }
+    this.allHeroes.sort((a, b) => a.name.localeCompare(b.name));
+  },
   
-  /**
-   * Get hero image URL (or placeholder if none exists)
-   * @param {string} heroName - Hero name
-   * @returns {string} Hero image URL
-   */
-  function getHeroImage(heroName) {
-    if (heroImages[heroName]) {
-      return heroImages[heroName];
+  // Get hero image URL (or placeholder if none exists)
+  getHeroImage: function(heroName) {
+    if (this.heroImages[heroName]) {
+      return this.heroImages[heroName];
     }
     return `https://via.placeholder.com/80?text=${encodeURIComponent(heroName)}`;
-  }
+  },
   
-  /**
-   * Setup event listeners
-   */
-  function setupEventListeners() {
-    // Hero search input in heroes page
-    const heroSearch = document.getElementById('hero-search');
-    if (heroSearch) {
-      heroSearch.addEventListener('input', filterHeroesBySearch);
-    }
-    
-    // Hero class filter in heroes page
-    const classFilter = document.getElementById('class-filter');
-    if (classFilter) {
-      classFilter.addEventListener('change', filterHeroesByClass);
-    }
-    
-    // Import heroes button
-    const importHeroesBtn = document.getElementById('import-heroes-btn');
-    if (importHeroesBtn) {
-      importHeroesBtn.addEventListener('click', handleImportHeroes);
-    }
-    
-    // Add hero button
-    const addHeroBtn = document.getElementById('add-hero-btn');
-    if (addHeroBtn) {
-      addHeroBtn.addEventListener('click', handleAddHero);
-    }
-    
-    // Hero image preview
-    const heroImage = document.getElementById('hero-image');
-    if (heroImage) {
-      heroImage.addEventListener('change', previewHeroImage);
-    }
-    
-    // Delete all heroes button
-    const deleteAllHeroesBtn = document.getElementById('delete-all-heroes-btn');
-    if (deleteAllHeroesBtn) {
-      deleteAllHeroesBtn.addEventListener('click', handleDeleteAllHeroes);
-    }
-  }
-  
-  /**
-   * Handle hero import from Excel file
-   */
-  function handleImportHeroes() {
-    console.log("Import heroes button clicked");
-    const fileInput = document.getElementById('import-heroes-file');
-    
-    if (!fileInput || !fileInput.files.length) {
-      alert('กรุณาเลือกไฟล์ก่อน');
+  // Initialize the hero selection grid
+  initHeroGrid: function() {
+    const heroesGrid = document.querySelector('.heroes-grid');
+    if (!heroesGrid) {
+      console.warn('Heroes grid element not found');
       return;
     }
     
-    const file = fileInput.files[0];
+    // Clear existing content
+    heroesGrid.innerHTML = '';
     
-    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
-      alert('กรุณาเลือกไฟล์ Excel (.xlsx หรือ .xls) เท่านั้น');
-      return;
-    }
-    
-    console.log("Starting import from Excel file:", file.name);
-    
-    // Ask user if they want to clear existing data
-    const clearAll = confirm(
-      'คุณต้องการลบข้อมูลฮีโร่เก่าทั้งหมดและนำเข้าใหม่หรือไม่?\n\n' +
-      'กด "OK" เพื่อลบข้อมูลเก่าและนำเข้าใหม่ทั้งหมด\n' +
-      'กด "Cancel" เพื่อเพิ่มข้อมูลเข้าไปในข้อมูลเดิม'
-    );
-    
-    // Show loading overlay
-    showLoading();
-    
-    try {
-      // Check for XLSX library
-      if (typeof XLSX === 'undefined') {
-        loadXlsxLibrary()
-          .then(() => processExcelFile(file, clearAll))
-          .catch(error => {
-            console.error('Error loading XLSX library:', error);
-            alert('ไม่สามารถโหลดไลบรารี XLSX ได้: ' + error.message);
-            hideLoading();
-          });
-      } else {
-        processExcelFile(file, clearAll);
-      }
-    } catch (error) {
-      console.error('Error importing heroes:', error);
-      alert('เกิดข้อผิดพลาดในการนำเข้าฮีโร่: ' + error.message);
-      hideLoading();
-    }
-  }
-  
-  /**
-   * Load XLSX library if not available
-   * @returns {Promise} Promise that resolves when the library is loaded
-   */
-  function loadXlsxLibrary() {
-    return new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
-      script.onload = resolve;
-      script.onerror = reject;
-      document.head.appendChild(script);
+    // Add heroes to the grid
+    this.allHeroes.forEach(hero => {
+      const heroCard = document.createElement('div');
+      heroCard.className = 'hero-card';
+      heroCard.dataset.name = hero.name;
+      heroCard.dataset.classes = hero.classes.join(',');
+      
+      // Create hero image
+      const heroImage = document.createElement('img');
+      heroImage.src = hero.image;
+      heroImage.alt = hero.name;
+      
+      // Create class indicators
+      const classIndicators = document.createElement('div');
+      classIndicators.className = 'class-indicators';
+      
+      hero.classes.forEach(cls => {
+        const indicator = document.createElement('span');
+        indicator.className = 'class-indicator';
+        indicator.style.backgroundColor = HERO_CLASS_COLORS[cls] || '#888';
+        indicator.title = cls;
+        classIndicators.appendChild(indicator);
+      });
+      
+      // Create hero name element
+      const heroName = document.createElement('div');
+      heroName.className = 'hero-name';
+      heroName.textContent = hero.name;
+      
+      // Assemble hero card
+      heroCard.appendChild(heroImage);
+      heroCard.appendChild(classIndicators);
+      heroCard.appendChild(heroName);
+      
+      // Add to grid
+      heroesGrid.appendChild(heroCard);
     });
-  }
+  },
   
-  /**
-   * Process Excel file for hero import
-   * @param {File} file - Excel file
-   * @param {boolean} clearAll - Whether to clear existing data
-   */
-  function processExcelFile(file, clearAll) {
-    const reader = new FileReader();
-    
-    reader.onload = function(e) {
-      try {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
+  // Set up event listeners for the hero selection interface
+  setupEventListeners: function() {
+    // Filter buttons in the modal
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    filterButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        // Remove active class from all buttons
+        filterButtons.forEach(btn => btn.classList.remove('active'));
         
-        // Get first sheet
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
+        // Add active class to the clicked button
+        button.classList.add('active');
         
-        // Convert to JSON
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-        
-        if (jsonData.length <= 1) {
-          alert('ไม่พบข้อมูลในไฟล์');
-          hideLoading();
-          return;
-        }
-        
-        // Process heroes
-        let heroes = {};
-        
-        // Clear existing data if requested
-        if (clearAll) {
-          heroes = {};
-          localStorage.removeItem('rovHeroImages');
-          localStorage.setItem('rovHeroImages', JSON.stringify({}));
-        } else {
-          try {
-            heroes = JSON.parse(localStorage.getItem('rovHeroData')) || {};
-          } catch (error) {
-            console.error('Error parsing hero data:', error);
-            heroes = {};
-          }
-        }
-        
-        // Process each row (skip header)
-        let heroCount = 0;
-        let processedHeroes = new Set(); // Track unique heroes
-        
-        for (let i = 1; i < jsonData.length; i++) {
-          const row = jsonData[i];
-          
-          // Check row has enough data
-          if (row.length < 2) continue;
-          
-          // Extract hero data
-          const heroName = row[0];
-          const heroClassesRaw = row[1];
-          const imagePath = row[2] || '';
-          
-          if (!heroName || !heroClassesRaw) continue;
-          
-          // Process hero classes
-          const heroClasses = heroClassesRaw.split('|').map(cls => cls.trim());
-          
-          // Add hero to each class
-          for (const heroClass of heroClasses) {
-            if (!heroes[heroClass]) {
-              heroes[heroClass] = [];
-            }
-            
-            if (!heroes[heroClass].includes(heroName)) {
-              heroes[heroClass].push(heroName);
-            }
-          }
-          
-          // Count unique heroes
-          if (!processedHeroes.has(heroName)) {
-            heroCount++;
-            processedHeroes.add(heroName);
-          }
-          
-          // Save image path if provided
-          if (imagePath) {
-            let heroImages = {};
-            try {
-              heroImages = JSON.parse(localStorage.getItem('rovHeroImages')) || {};
-            } catch (error) {
-              console.error('Error parsing hero images:', error);
-              heroImages = {};
-            }
-            
-            heroImages[heroName] = imagePath;
-            localStorage.setItem('rovHeroImages', JSON.stringify(heroImages));
-          }
-        }
-        
-        // Save hero data
-        localStorage.setItem('rovHeroData', JSON.stringify(heroes));
-        
-        // Refresh table
-        if (typeof renderHeroesTable === 'function') {
-          renderHeroesTable();
-        }
-        
-        // Reset form
-        document.getElementById('import-heroes-file').value = '';
-        
-        const message = clearAll ? 
-          `ลบข้อมูลเก่าและนำเข้าข้อมูลฮีโร่ใหม่สำเร็จ เพิ่มฮีโร่ ${heroCount} ตัว` : 
-          `นำเข้าข้อมูลฮีโร่สำเร็จ เพิ่มฮีโร่ใหม่ ${heroCount} ตัว`;
-        
-        alert(message);
-        
-        // Reload hero data
-        loadHeroData();
-      } catch (error) {
-        console.error('Error processing Excel file:', error);
-        alert('เกิดข้อผิดพลาดในการประมวลผลไฟล์ Excel: ' + error.message);
-      } finally {
-        hideLoading();
-      }
-    };
-    
-    reader.onerror = function() {
-      alert('เกิดข้อผิดพลาดในการอ่านไฟล์');
-      hideLoading();
-    };
-    
-    reader.readAsArrayBuffer(file);
-  }
-  
-  /**
-   * Handle adding a new hero
-   */
-  function handleAddHero() {
-    const heroName = document.getElementById('hero-name').value.trim();
-    const heroClass = document.getElementById('hero-class').value;
-    const heroImageInput = document.getElementById('hero-image');
-    
-    // Validate inputs
-    if (!heroName) {
-      alert('กรุณาใส่ชื่อฮีโร่');
-      return;
-    }
-    
-    if (!heroImageInput.files || heroImageInput.files.length === 0) {
-      alert('กรุณาเลือกรูปภาพ');
-      return;
-    }
-    
-    const file = heroImageInput.files[0];
-    const reader = new FileReader();
-    
-    reader.onload = function(e) {
-      try {
-        const imageData = e.target.result; // Base64 encoded image
-        
-        // Load existing heroes
-        let heroes = {};
-        try {
-          heroes = JSON.parse(localStorage.getItem('rovHeroData')) || {};
-        } catch (error) {
-          console.error('Error parsing hero data:', error);
-          heroes = {};
-        }
-        
-        // Add hero to class
-        if (!heroes[heroClass]) {
-          heroes[heroClass] = [];
-        }
-        
-        if (!heroes[heroClass].includes(heroName)) {
-          heroes[heroClass].push(heroName);
-        }
-        
-        // Save hero data
-        localStorage.setItem('rovHeroData', JSON.stringify(heroes));
-        
-        // Save hero image
-        let heroImages = {};
-        try {
-          heroImages = JSON.parse(localStorage.getItem('rovHeroImages')) || {};
-        } catch (error) {
-          console.error('Error parsing hero images:', error);
-          heroImages = {};
-        }
-        
-        heroImages[heroName] = imageData;
-        localStorage.setItem('rovHeroImages', JSON.stringify(heroImages));
-        
-        // Reset form
-        document.getElementById('hero-name').value = '';
-        document.getElementById('hero-image').value = '';
-        document.getElementById('image-preview').innerHTML = '<span>ตัวอย่างรูปภาพ</span>';
-        
-        // Refresh table
-        if (typeof renderHeroesTable === 'function') {
-          renderHeroesTable();
-        }
-        
-        // Reload hero data
-        loadHeroData();
-        
-        alert(`เพิ่มฮีโร่ ${heroName} (${heroClass}) สำเร็จ`);
-      } catch (error) {
-        console.error('Error adding hero:', error);
-        alert('เกิดข้อผิดพลาดในการเพิ่มฮีโร่: ' + error.message);
-      }
-    };
-    
-    reader.onerror = function() {
-      alert('เกิดข้อผิดพลาดในการอ่านไฟล์รูปภาพ');
-    };
-    
-    reader.readAsDataURL(file);
-  }
-  
-  /**
-   * Preview hero image before upload
-   * @param {Event} e - Change event
-   */
-  function previewHeroImage(e) {
-    const preview = document.getElementById('image-preview');
-    if (!preview) return;
-    
-    preview.innerHTML = '';
-    
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      
-      reader.onload = function(event) {
-        const img = document.createElement('img');
-        img.src = event.target.result;
-        preview.appendChild(img);
-      };
-      
-      reader.readAsDataURL(file);
-    } else {
-      preview.innerHTML = '<span>ตัวอย่างรูปภาพ</span>';
-    }
-  }
-  
-  /**
-   * Handle deleting all heroes
-   */
-  function handleDeleteAllHeroes() {
-    if (confirm('คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลฮีโร่ทั้งหมด? การกระทำนี้ไม่สามารถเรียกคืนได้')) {
-      try {
-        // Clear hero data
-        localStorage.removeItem('rovHeroData');
-        localStorage.removeItem('rovHeroImages');
-        
-        // Set empty objects
-        localStorage.setItem('rovHeroData', JSON.stringify({}));
-        localStorage.setItem('rovHeroImages', JSON.stringify({}));
-        
-        // Refresh table
-        if (typeof renderHeroesTable === 'function') {
-          renderHeroesTable();
-        }
-        
-        // Reload hero data
-        loadHeroData();
-        
-        alert('ลบข้อมูลฮีโร่ทั้งหมดเรียบร้อย');
-      } catch (error) {
-        console.error('Error deleting all heroes:', error);
-        alert('เกิดข้อผิดพลาดในการลบข้อมูลฮีโร่: ' + error.message);
-      }
-    }
-  }
-  
-  /**
-   * Filter heroes by search term
-   */
-  function filterHeroesBySearch() {
-    const searchText = document.getElementById('hero-search')?.value.toLowerCase() || '';
-    const activeClass = document.getElementById('class-filter')?.value || '';
-    
-    filterHeroes(searchText, activeClass);
-  }
-  
-  /**
-   * Filter heroes by class
-   */
-  function filterHeroesByClass() {
-    const searchText = document.getElementById('hero-search')?.value.toLowerCase() || '';
-    const activeClass = document.getElementById('class-filter')?.value || '';
-    
-    filterHeroes(searchText, activeClass);
-  }
-  
-  /**
-   * Filter heroes in the table
-   * @param {string} searchText - Search text
-   * @param {string} classFilter - Class filter
-   */
-  function filterHeroes(searchText, classFilter) {
-    const rows = document.querySelectorAll('#heroes-tbody tr');
-    
-    rows.forEach(row => {
-      const nameCell = row.querySelector('td:nth-child(2)');
-      const classCell = row.querySelector('td:nth-child(3)');
-      
-      if (!nameCell || !classCell) return;
-      
-      const name = nameCell.textContent.toLowerCase();
-      
-      // Get hero classes from spans
-      const classSpans = classCell.querySelectorAll('span');
-      const heroClasses = Array.from(classSpans)
-        .filter(span => span.textContent !== '|')
-        .map(span => span.textContent);
-      
-      const matchesSearch = name.includes(searchText);
-      const matchesClass = classFilter === '' || heroClasses.includes(classFilter);
-      
-      row.style.display = matchesSearch && matchesClass ? '' : 'none';
+        // Apply the filter
+        const filter = button.getAttribute('data-filter');
+        this.filterHeroesByClass(filter);
+      });
     });
-  }
+    
+    // Hero search input
+    const searchInput = document.getElementById('heroSearch');
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        this.filterHeroesBySearch(searchInput.value);
+      });
+    }
+    
+    // Hero cards in the grid
+    const heroCards = document.querySelectorAll('.hero-card');
+    heroCards.forEach(card => {
+      card.addEventListener('click', () => {
+        const heroName = card.getAttribute('data-name');
+        this.selectHero(heroName);
+      });
+    });
+  },
   
-  /**
-   * Handle hero selection for ban or pick
-   * @param {string} heroName - Hero name
-   */
-  function selectHero(heroName) {
+  // Filter heroes by class
+  filterHeroesByClass: function(classFilter) {
+    const heroCards = document.querySelectorAll('.hero-card');
+    const searchFilter = document.getElementById('heroSearch')?.value.toLowerCase() || '';
+    
+    heroCards.forEach(card => {
+      const heroName = card.getAttribute('data-name').toLowerCase();
+      const heroClasses = card.getAttribute('data-classes').split(',');
+      
+      const matchesClass = classFilter === 'all' || heroClasses.includes(classFilter);
+      const matchesSearch = heroName.includes(searchFilter);
+      
+      card.style.display = matchesClass && matchesSearch ? 'block' : 'none';
+    });
+  },
+  
+  // Filter heroes by search term
+  filterHeroesBySearch: function(searchTerm) {
+    const heroCards = document.querySelectorAll('.hero-card');
+    const searchFilter = searchTerm.toLowerCase();
+    const activeClass = document.querySelector('.filter-btn.active')?.getAttribute('data-filter') || 'all';
+    
+    heroCards.forEach(card => {
+      const heroName = card.getAttribute('data-name').toLowerCase();
+      const heroClasses = card.getAttribute('data-classes').split(',');
+      
+      const matchesClass = activeClass === 'all' || heroClasses.includes(activeClass);
+      const matchesSearch = heroName.includes(searchFilter);
+      
+      card.style.display = matchesClass && matchesSearch ? 'block' : 'none';
+    });
+  },
+  
+  // Handle hero selection for ban or pick
+  selectHero: function(heroName) {
     console.log('Selected hero:', heroName);
     
-    // Get current selection state from UI Manager
-    const selectionState = getSelectionState();
+    // Get the current selection state from the UI
+    const selectionState = UIManager.getSelectionState();
     if (!selectionState) {
       console.warn('Selection state not available');
       return;
@@ -574,109 +242,46 @@ const HeroManager = (() => {
     let success = false;
     
     if (selectionState.targetType === 'ban') {
-      if (typeof AnalyticsManager !== 'undefined' && typeof AnalyticsManager.addBan === 'function') {
-        success = AnalyticsManager.addBan(
-          selectionState.targetTeam,
-          heroName,
-          selectionState.targetSlot
-        );
-      }
+      success = AnalyticsManager.addBan(
+        selectionState.targetTeam,
+        heroName,
+        selectionState.targetSlot
+      );
     } else {
-      if (typeof AnalyticsManager !== 'undefined' && typeof AnalyticsManager.addPick === 'function') {
-        success = AnalyticsManager.addPick(
-          selectionState.targetTeam,
-          heroName,
-          selectionState.targetSlot
-        );
-      }
+      success = AnalyticsManager.addPick(
+        selectionState.targetTeam,
+        heroName,
+        selectionState.targetSlot
+      );
     }
     
     // Handle result
     if (success) {
-      // Close modal
-      closeHeroSelectionModal();
+      // Close the modal
+      const modal = document.getElementById('heroSelectionModal');
+      if (modal) {
+        modal.style.display = 'none';
+      }
       
-      // Refresh UI
+      // Refresh the UI
       if (typeof UIManager !== 'undefined' && typeof UIManager.render === 'function') {
         UIManager.render();
       }
     } else {
+      // Show error message
       alert('ไม่สามารถเลือกฮีโร่นี้ได้ อาจเพราะถูกเลือกหรือแบนไปแล้ว');
     }
-  }
+  },
   
-  /**
-   * Get selection state from UI Manager
-   * @returns {Object|null} Selection state or null if not available
-   */
-  function getSelectionState() {
-    if (typeof UIManager !== 'undefined' && typeof UIManager.getSelectionState === 'function') {
-      return UIManager.getSelectionState();
-    }
-    
-    if (typeof HeroSelectionController !== 'undefined' && typeof HeroSelectionController.getSelectionState === 'function') {
-      return HeroSelectionController.getSelectionState();
-    }
-    
-    return {
-      targetTeam: 1,
-      targetSlot: 0,
-      targetType: 'ban'
-    };
-  }
+  // Get a hero by name
+  getHeroByName: function(name) {
+    return this.allHeroes.find(hero => hero.name === name);
+  },
   
-  /**
-   * Close hero selection modal
-   */
-  function closeHeroSelectionModal() {
-    const modal = document.getElementById('heroSelectionModal');
-    if (modal) {
-      modal.style.display = 'none';
-    }
-  }
-  
-  /**
-   * Get a hero by name
-   * @param {string} name - Hero name
-   * @returns {Object|null} Hero object or null if not found
-   */
-  function getHeroByName(name) {
-    return allHeroes.find(hero => hero.name === name) || null;
-  }
-  
-  /**
-   * Show loading overlay
-   */
-  function showLoading() {
-    const loadingOverlay = document.querySelector('.loading-overlay');
-    if (loadingOverlay) {
-      loadingOverlay.style.display = 'flex';
-    }
-  }
-  
-  /**
-   * Hide loading overlay
-   */
-  function hideLoading() {
-    const loadingOverlay = document.querySelector('.loading-overlay');
-    if (loadingOverlay) {
-      loadingOverlay.style.display = 'none';
-    }
-  }
-  
-  /**
-   * Apply visual enhancements to the hero selection grid
-   */
-  function enhanceHeroGrid() {
-    // Check if styles already exist
-    if (document.getElementById('hero-grid-styles')) {
-      return;
-    }
-    
-    // Create style element
+  // Apply visual enhancements to the hero selection grid
+  enhanceHeroGrid: function() {
+    // Add CSS for the hero grid enhancements
     const style = document.createElement('style');
-    style.id = 'hero-grid-styles';
-    
     style.textContent = `
       /* Enhanced Hero Grid Styles */
       .heroes-grid {
@@ -738,27 +343,129 @@ const HeroManager = (() => {
         border-radius: 50%;
         display: inline-block;
       }
+      
+      /* Filter button styles */
+      .filter-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 15px;
+      }
+      
+      .filter-btn {
+        padding: 8px 12px;
+        border: none;
+        border-radius: 6px;
+        background-color: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-family: 'Kanit', sans-serif;
+        font-size: 0.9rem;
+      }
+      
+      .filter-btn:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+      }
+      
+      .filter-btn.active {
+        background-color: #2e3192;
+      }
+      
+      /* Class-specific filter buttons */
+      .filter-btn[data-filter="Assassin"] {
+        border-left: 4px solid ${HERO_CLASS_COLORS.Assassin};
+      }
+      
+      .filter-btn[data-filter="Fighter"] {
+        border-left: 4px solid ${HERO_CLASS_COLORS.Fighter};
+      }
+      
+      .filter-btn[data-filter="Mage"] {
+        border-left: 4px solid ${HERO_CLASS_COLORS.Mage};
+      }
+      
+      .filter-btn[data-filter="Carry"] {
+        border-left: 4px solid ${HERO_CLASS_COLORS.Carry};
+      }
+      
+      .filter-btn[data-filter="Support"] {
+        border-left: 4px solid ${HERO_CLASS_COLORS.Support};
+      }
+      
+      .filter-btn[data-filter="Tank"] {
+        border-left: 4px solid ${HERO_CLASS_COLORS.Tank};
+      }
+      
+      /* Hero search input */
+      #heroSearch {
+        width: 100%;
+        padding: 10px 15px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background-color: rgba(0, 0, 0, 0.2);
+        color: #fff;
+        font-family: 'Kanit', sans-serif;
+        font-size: 1rem;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+      }
+      
+      #heroSearch:focus {
+        border-color: #1baeea;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(27, 174, 234, 0.2);
+      }
     `;
     
     // Add style to head
     document.head.appendChild(style);
   }
-  
-  // Public API
-  return {
-    init,
-    allHeroes,
-    getHeroByName,
-    selectHero,
-    getHeroImage,
-    enhanceHeroGrid
-  };
-})();
+};
 
-// Initialize on DOM content loaded
+// Extend UIManager to expose the selection state
+if (typeof UIManager !== 'undefined') {
+  UIManager.getSelectionState = function() {
+    return this.selectionState || {
+      targetTeam: 1,
+      targetSlot: 0,
+      targetType: 'ban' // 'ban' or 'pick'
+    };
+  };
+}
+
+// Initialize the hero manager when the page loads
 document.addEventListener('DOMContentLoaded', function() {
-  // Only initialize if not already initialized by app.js
-  if (typeof RoVDraftHelper === 'undefined' || !RoVDraftHelper.initialized) {
-    HeroManager.init();
+  // Initialize HeroManager
+  HeroManager.init();
+  
+  // Apply visual enhancements
+  HeroManager.enhanceHeroGrid();
+  
+  // Override the populateHeroGrid method in UIManager if it exists
+  if (typeof UIManager !== 'undefined' && typeof UIManager.populateHeroGrid === 'function') {
+    const originalPopulateHeroGrid = UIManager.populateHeroGrid;
+    
+    UIManager.populateHeroGrid = function() {
+      // Call the original method
+      originalPopulateHeroGrid.call(UIManager);
+      
+      // Then enhance the grid
+      HeroManager.enhanceHeroGrid();
+      
+      // Re-setup event listeners for the hero cards
+      const heroCards = document.querySelectorAll('.hero-card');
+      heroCards.forEach(card => {
+        // Remove any existing click listeners
+        const newCard = card.cloneNode(true);
+        card.parentNode.replaceChild(newCard, card);
+        
+        // Add new click listener
+        newCard.addEventListener('click', () => {
+          const heroName = newCard.querySelector('.hero-name').textContent;
+          HeroManager.selectHero(heroName);
+        });
+      });
+    };
   }
 });
