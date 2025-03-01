@@ -854,17 +854,25 @@ const MatchesUI = (() => {
   }
   
   /**
-   * Import matches from a file
-   * @param {Event} event - The file input change event
+   * Import matches from Excel file - Implemented Excel support
+   * @param {Event|File} eventOrFile - Either the file input change event or a file object
    */
-  function importMatchesFromFile(event) {
-    const file = event.target.files[0];
+  function importMatchesFromFile(eventOrFile) {
+    let file;
+    
+    // Determine if we got an event or directly a file
+    if (eventOrFile.target && eventOrFile.target.files) {
+      file = eventOrFile.target.files[0];
+    } else {
+      file = eventOrFile;
+    }
     
     if (!file) {
+      alert('กรุณาเลือกไฟล์ก่อน');
       return;
     }
     
-    // Show loading overlay
+    // Show loading indicator
     showLoading();
     
     const reader = new FileReader();
@@ -873,34 +881,102 @@ const MatchesUI = (() => {
       try {
         let newMatches = [];
         
-        // Check file type
+        // Process based on file type
         if (file.name.endsWith('.json')) {
-          // JSON file
+          // Parse JSON file
           newMatches = JSON.parse(e.target.result);
         } else if (file.name.endsWith('.csv')) {
-          // CSV file - not implemented in this example
-          alert('CSV import not supported in this example');
+          // Alert for CSV support in the future
+          alert('ยังไม่รองรับไฟล์ CSV ในตัวอย่างนี้');
           hideLoading();
           return;
         } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-          // Excel file - not implemented in this example
-          alert('Excel import not supported in this example');
-          hideLoading();
-          return;
+          // Process Excel file
+          try {
+            // Check if XLSX is available
+            if (typeof XLSX === 'undefined') {
+              alert('กรุณาโหลดเว็บไซต์ใหม่เพื่อโหลดไลบรารี XLSX');
+              hideLoading();
+              return;
+            }
+            
+            // Parse Excel file
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            
+            // Get first sheet
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            
+            // Convert to JSON
+            const jsonData = XLSX.utils.sheet_to_json(worksheet);
+            
+            // Check if data exists
+            if (!jsonData || jsonData.length === 0) {
+              alert('ไม่พบข้อมูลในไฟล์ Excel');
+              hideLoading();
+              return;
+            }
+            
+            // Process each row into match format
+            jsonData.forEach(row => {
+              // Expected columns:
+              // date, tournament, team1, team2, picks1, picks2, bans1, bans2, winner
+              
+              // Check if row has minimum required data
+              if (!row.date || !row.team1 || !row.team2) {
+                console.warn('Skipping row with missing required data:', row);
+                return;
+              }
+              
+              // Process pick and ban columns
+              // They might be strings with comma/semicolon separated values
+              const processList = (value) => {
+                if (!value) return [];
+                if (Array.isArray(value)) return value;
+                if (typeof value === 'string') {
+                  // Split by comma or semicolon
+                  return value.split(/[,;]/).map(item => item.trim()).filter(Boolean);
+                }
+                return [];
+              };
+              
+              const newMatch = {
+                date: row.date,
+                tournament: row.tournament || 'Unknown Tournament',
+                team1: row.team1,
+                team2: row.team2,
+                picks1: processList(row.picks1),
+                picks2: processList(row.picks2),
+                bans1: processList(row.bans1),
+                bans2: processList(row.bans2),
+                winner: row.winner || '',
+                isImported: true
+              };
+              
+              newMatches.push(newMatch);
+            });
+            
+          } catch (excelError) {
+            console.error('Error processing Excel file:', excelError);
+            alert('เกิดข้อผิดพลาดในการประมวลผลไฟล์ Excel: ' + excelError.message);
+            hideLoading();
+            return;
+          }
         } else {
-          alert('Unsupported file type. Please use JSON, CSV, or Excel file');
+          alert('ไฟล์ไม่รองรับ กรุณาใช้ไฟล์ JSON, CSV หรือ Excel');
           hideLoading();
           return;
         }
         
         // Validate data format
         if (!Array.isArray(newMatches)) {
-          alert('Invalid data format. Data should be an array of matches');
+          alert('รูปแบบข้อมูลไม่ถูกต้อง ควรเป็นอาร์เรย์ของแมตช์');
           hideLoading();
           return;
         }
         
-        // Add new matches to localStorage
+        // Get existing matches
         let matches = [];
         try {
           matches = JSON.parse(localStorage.getItem('rovMatchData')) || [];
@@ -908,34 +984,39 @@ const MatchesUI = (() => {
           matches = [];
         }
         
-        // Mark all imported matches
-        newMatches = newMatches.map(match => ({
-          ...match,
-          isImported: true
-        }));
+        // Mark new matches as imported
+        newMatches.forEach(match => {
+          match.isImported = true;
+        });
         
-        // Combine new matches with existing ones
+        // Combine with existing matches
         matches = [...matches, ...newMatches];
         
         // Save to localStorage
         localStorage.setItem('rovMatchData', JSON.stringify(matches));
         
-        // Refresh the matches table
-        filterMatches();
+        // Reset search/filter state
+        localStorage.removeItem('rovFilteredMatches');
+        currentPage = 1;
         
-        // Update data
+        // Refresh table
+        renderMatchesTable();
+        
+        // Update DataManager
         if (typeof DataManager !== 'undefined' && typeof DataManager.init === 'function') {
-          DataManager.init().then(() => {
-            if (typeof UIManager !== 'undefined' && typeof UIManager.render === 'function') {
-              UIManager.render();
-            }
-          });
+          DataManager.init();
         }
         
-        alert(`Successfully imported ${newMatches.length} matches`);
+        // Reset file input
+        const fileInput = document.getElementById('import-file');
+        if (fileInput) {
+          fileInput.value = '';
+        }
+        
+        alert(`นำเข้าแมตช์สำเร็จ เพิ่มแมตช์ใหม่ ${newMatches.length} แมตช์`);
       } catch (error) {
         console.error('Error importing matches from file:', error);
-        alert('Error importing matches');
+        alert('เกิดข้อผิดพลาดในการนำเข้าแมตช์: ' + error.message);
       } finally {
         hideLoading();
       }
@@ -943,11 +1024,15 @@ const MatchesUI = (() => {
     
     reader.onerror = function() {
       hideLoading();
-      alert('Error reading file');
+      alert('เกิดข้อผิดพลาดในการอ่านไฟล์');
     };
     
-    // Read the file as text
-    reader.readAsText(file);
+    // Read file as ArrayBuffer for Excel files, or as text for JSON
+    if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+      reader.readAsArrayBuffer(file);
+    } else {
+      reader.readAsText(file);
+    }
   }
   
   /**

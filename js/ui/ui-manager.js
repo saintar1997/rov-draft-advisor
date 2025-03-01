@@ -699,7 +699,7 @@ function deleteHero(heroName) {
   }
   
   /**
-   * Import heroes from file
+   * Import heroes from Excel file - Fixed to include image processing
    */
   async function importHeroes() {
     try {
@@ -765,8 +765,17 @@ function deleteHero(heroName) {
               heroes = {};
             }
             
+            // Get existing hero images
+            let heroImages = {};
+            try {
+              heroImages = JSON.parse(localStorage.getItem('rovHeroImages')) || {};
+            } catch (error) {
+              heroImages = {};
+            }
+            
             // Process heroes
             let heroCount = 0;
+            let imageCount = 0;
             
             // Skip header row
             for (let i = 1; i < jsonData.length; i++) {
@@ -777,6 +786,8 @@ function deleteHero(heroName) {
               
               const heroName = row[0];
               const heroClassesRaw = row[1];
+              // Get image URL from the third column if it exists
+              const imageUrl = row.length > 2 ? row[2] : null;
               
               if (!heroName || !heroClassesRaw) continue;
               
@@ -794,10 +805,22 @@ function deleteHero(heroName) {
                   heroCount++;
                 }
               }
+              
+              // Process image URL if provided
+              if (imageUrl && typeof imageUrl === 'string' && imageUrl.trim() !== '') {
+                heroImages[heroName] = imageUrl.trim();
+                imageCount++;
+              } else if (!heroImages[heroName]) {
+                // Set placeholder if no image exists for this hero
+                heroImages[heroName] = `https://via.placeholder.com/80?text=${encodeURIComponent(heroName)}`;
+              }
             }
             
             // Save hero data
             localStorage.setItem('rovHeroData', JSON.stringify(heroes));
+            
+            // Save hero images
+            localStorage.setItem('rovHeroImages', JSON.stringify(heroImages));
             
             // Reinitialize HeroManager
             await HeroManager.init();
@@ -809,8 +832,8 @@ function deleteHero(heroName) {
             fileInput.value = '';
             
             const message = clearAll ? 
-              `ลบข้อมูลเก่าและนำเข้าข้อมูลฮีโร่ใหม่สำเร็จ เพิ่มฮีโร่ ${heroCount} ตัว` : 
-              `นำเข้าข้อมูลฮีโร่สำเร็จ เพิ่มฮีโร่ใหม่ ${heroCount} ตัว`;
+              `ลบข้อมูลเก่าและนำเข้าข้อมูลฮีโร่ใหม่สำเร็จ เพิ่มฮีโร่ ${heroCount} ตัว, ภาพ ${imageCount} ภาพ` : 
+              `นำเข้าข้อมูลฮีโร่สำเร็จ เพิ่มฮีโร่ใหม่ ${heroCount} ตัว, ภาพ ${imageCount} ภาพ`;
             
             alert(message);
           } catch (error) {
